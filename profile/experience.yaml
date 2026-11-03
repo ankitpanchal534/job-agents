@@ -1,0 +1,15 @@
+# One entry per role, newest first.
+# Dates are YYYY-MM; use "present" for a current job.
+# The three summaries let the agent pick the length a form field allows.
+
+roles: []
+#  - company: ""
+#    title: ""
+#    start: "2022-01"
+#    end: present
+#    location: ""
+#    summary_short: ""      # one line
+#    summary_medium: ""     # 3-4 lines
+#    summary_long: ""       # full detail
+#    achievements: []
+#    tech: []

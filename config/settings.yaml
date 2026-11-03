@@ -1,0 +1,105 @@
+# System settings. Edit freely; run `python -m jobagent check-config` to validate.
+# Secrets (API keys) never go here: put them in .env and reference the variable name below.
+
+llm:
+  # GLOBAL TOGGLE. Flips every task below at once.   local | openai | groq | huggingface
+  provider: local
+
+  # Both providers use the OpenAI-compatible API, so one client serves both.
+  providers:
+    local:
+      # Ollama default. LM Studio is usually http://localhost:1234/v1
+      base_url: http://localhost:11434/v1
+      api_key_env: null
+    openai:
+      base_url: https://api.openai.com/v1
+      api_key_env: OPENAI_API_KEY
+    groq:
+      base_url: https://api.groq.com/openai/v1
+      api_key_env: GROQ_API_KEY
+    huggingface:
+      # Inference Providers router. Token needs the "Make calls to Inference Providers" permission.
+      base_url: https://router.huggingface.co/v1
+      api_key_env: HF_TOKEN
+
+  # One entry per task. `models` must name a model for the active provider (and for a task's pinned
+  # provider). Add the others before you switch to them: `check-config` warns about any gap.
+  # Model ids: run `python -m jobagent models --provider <name>` to list what a provider offers.
+  # huggingface ids below were checked against its public model list; groq ids are NOT verified yet.
+  # `provider` (optional) pins that one task to a provider regardless of the toggle,
+  # e.g. set vision.provider: openai to keep vision on OpenAI while everything else is local.
+  tasks:
+    jd_extraction:
+      what: Turn a job post into structured fields (title, seniority, years, skills, location)
+      models: { local: "qwen2.5-coder-7b-8k:latest", openai: "gpt-4o-mini", groq: "llama-3.1-8b-instant", huggingface: "meta-llama/Llama-3.1-8B-Instruct" }
+      provider: null
+      temperature: 0.0
+      max_tokens: 1500
+    jd_summary:
+      what: Write the short job summary stored in the tracker
+      models: { local: "qwen2.5-coder-7b-8k:latest", openai: "gpt-4o-mini", groq: "llama-3.1-8b-instant", huggingface: "meta-llama/Llama-3.1-8B-Instruct" }
+      provider: null
+      temperature: 0.2
+      max_tokens: 400
+    skill_scoring:
+      what: Compare JD requirements with your skills and return a score with reasons
+      models: { local: "qwen2.5-coder-7b-8k:latest", openai: "gpt-4o-mini", groq: "llama-3.1-8b-instant", huggingface: "meta-llama/Llama-3.1-8B-Instruct" }
+      provider: null
+      temperature: 0.0
+      max_tokens: 1200
+    answer_matching:
+      what: Match a form question to an entry in your FAQ answer bank
+      models: { local: "qwen2.5-coder-7b-8k:latest", openai: "gpt-4o-mini", groq: "llama-3.1-8b-instant", huggingface: "meta-llama/Llama-3.1-8B-Instruct" }
+      provider: null
+      temperature: 0.0
+      max_tokens: 300
+    answer_generation:
+      what: Draft an open-ended answer using only your profile files
+      models: { local: "qwen2.5-coder-7b-8k:latest", openai: "gpt-4o", groq: "llama-3.3-70b-versatile", huggingface: "meta-llama/Llama-3.3-70B-Instruct" }
+      provider: null
+      temperature: 0.4
+      max_tokens: 800
+    vision:
+      what: Read screenshots (forms, confirmation pages)
+      models: { local: "qwen2.5-coder-7b-8k:latest", openai: "gpt-4o", groq: "meta-llama/llama-4-scout-17b-16e-instruct", huggingface: "Qwen/Qwen3-VL-30B-A3B-Instruct" }
+      provider: null
+      temperature: 0.0
+      max_tokens: 800
+
+matcher:
+  apply_threshold: 75     # score at or above this goes to the apply queue
+  watch_floor: 50         # score from here up to the threshold is kept as watch_later; below is rejected
+  must_have_weight: 3     # a missing must-have skill costs this many times more than a nice-to-have
+  nice_to_have_weight: 1
+
+resolver:
+  fuzzy_match_cutoff: 0.9      # near-identical form questions reuse your curated answer (never for sensitive topics)
+  llm_match_confidence: 0.8    # the model must be at least this sure that a reworded question matches a curated one
+  llm_match_candidates: 5      # how many curated questions are shown to the model when matching
+
+notifications:
+  ntfy:
+    enabled: true
+    server: https://ntfy.sh
+    # ntfy.sh topics are PUBLIC to anyone who guesses the name. Use a long random string.
+    topic: ankit9568376762
+  desktop:
+    toast: false
+    sound: false
+  # Same problem on the same site within this many minutes sends one alert, then a "+N similar" summary.
+  cooldown_minutes: 15
+
+review_ui:
+  host: 127.0.0.1
+  port: 8501
+
+storage:
+  db_path: data/jobs.db
+
+guardrails:
+  # The applicant may only open pages on these domains (and their subdomains).
+  # Empty means nothing is allowed, so add the portals you actually use.
+  allowed_domains: []
+  #  - greenhouse.io
+  #  - lever.co
+  #  - ashbyhq.com

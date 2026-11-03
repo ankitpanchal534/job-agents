@@ -1,0 +1,10 @@
+# Skills the matcher compares against each job description.
+# level: beginner | intermediate | advanced | expert
+# tier:  core      = what you want to be hired for
+#        secondary = you can do it, but it is not your focus
+
+skills: []
+#  - name: React
+#    years: 3
+#    level: advanced
+#    tier: core

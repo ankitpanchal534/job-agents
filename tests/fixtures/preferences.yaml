@@ -1,0 +1,35 @@
+target:
+  roles: []
+  exclude_title_keywords:
+    - intern
+    - internship
+    - unpaid
+  seniority: []
+  years_experience:
+    min: 0
+    max: 40
+  job_types:
+    - full-time
+
+locations:
+  countries: []
+  cities: []
+  remote: allowed
+  open_to_relocation: false
+
+compensation:
+  salary_floor: 0
+  currency: INR
+  period: year
+
+work_authorization:
+  - country: ""
+    authorized: true
+    needs_sponsorship: false
+
+availability:
+  notice_period_days: 30
+
+blacklist:
+  companies: []
+  description_keywords: []

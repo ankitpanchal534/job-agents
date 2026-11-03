@@ -1,0 +1,10 @@
+# FAQ answer bank: your own answers to questions application forms keep asking.
+# A matching question gets your answer verbatim. Anything not covered here is drafted from your
+# profile files and queued for your review, or blocked if it needs a fact you have not given.
+# Visa, salary, notice period, relocation, background checks and demographic questions are never
+# drafted: they are answered only from here and preferences.yaml, otherwise the agent asks you.
+
+faq: []
+#  - question: "Why do you want to work here?"
+#    answer: ""
+#    tags: [motivation]

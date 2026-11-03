@@ -1,0 +1,9 @@
+# One entry per degree or certification, newest first.
+
+degrees: []
+#  - institution: ""
+#    degree: ""            # e.g. B.Tech
+#    field: ""
+#    start_year: 2016
+#    end_year: 2020        # leave out if still studying
+#    grade: ""

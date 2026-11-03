@@ -1,0 +1,17 @@
+# Your personal details, used to fill application forms.
+# Facts only: leave a field empty rather than guess. Run `python -m jobagent check-config` to validate.
+
+full_name: ""
+email: ""            # use your dedicated job-search address
+phone: ""
+city: ""
+country: ""
+
+languages: []
+#  - English
+
+links:
+  linkedin: ""
+  github: ""
+  portfolio: ""
+  other: []

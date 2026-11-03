@@ -1,0 +1,17 @@
+# Your own verdicts on real job postings, used to check whether the matcher agrees with you.
+# Run:  python -m jobagent calibrate calibration/labels.yaml
+#
+# How to fill it in (about 25 postings gives a useful picture):
+#   1. Save each job description as plain text in calibration/jd/, for example calibration/jd/acme-frontend.txt
+#   2. Add an entry below saying what YOU would do with that job.
+#
+# label: apply        you would apply
+#        watch_later  interesting, but not now
+#        reject       not for you
+# Paths are relative to this file. The run prints every disagreement with the matcher's reason,
+# so you can tune matcher.apply_threshold, matcher.watch_floor and the weights in config/settings.yaml.
+
+jobs: []
+#  - file: jd/acme-frontend.txt
+#    label: apply
+#    note: React and TypeScript, remote
