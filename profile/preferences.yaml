@@ -2,65 +2,76 @@
 # Hard filters are applied BEFORE any skill scoring: a job that fails one is rejected and logged.
 
 target:
-  # Job titles to look for (matched against the posting title, case-insensitive, partial match).
   roles:
     - Frontend Engineer
     - Frontend Developer
     - Application Developer
     - Web Developer
     - React.js Developer
+    - React Developer
+    - Software Engineer (Frontend)
+    - UI Engineer
+    - Next.js Developer
 
-  # Reject a posting if its title contains any of these words.
   exclude_title_keywords:
     - intern
     - internship
     - unpaid
 
-  # Allowed levels: intern | junior | mid | senior | lead | principal | manager
   seniority:
     - junior
     - mid
+    - senior
 
-  # Years of experience a posting may ask for. Postings outside this range fail the filter.
   years_experience:
     min: 0
     max: 40
 
-  # full-time | part-time | contract | internship
   job_types:
     - full-time
 
 locations:
-  # Countries and cities you will accept. Empty lists mean "anywhere".
-  countries: []
-  #  - India
-  cities: []
-  #  - Bengaluru
+  countries:
+    - India
+    - United Kingdom
+    - United States
+    - Germany
+    - Netherlands
+    - Canada
+    - Australia
+    - Singapore
+    - United Arab Emirates
 
-  # only      = remote jobs only
-  # preferred = remote or on-site in an accepted city, remote ranked higher
-  # allowed   = remote or on-site in an accepted city
-  # no        = on-site only
+  cities:
+    - Gurgaon
+    - Gurugram
+    - Bengaluru
+    - Bangalore
+    - Hyderabad
+    - Pune
+    - Mumbai
+    - Noida
+    - Delhi
+    - Chennai
+
   remote: allowed
 
   open_to_relocation: true
 
 compensation:
-  # Minimum acceptable pay. 0 disables the filter. Postings with no stated salary always pass.
   salary_floor: 0
   currency: INR
-  period: year            # year | month
+  period: year
 
 work_authorization:
-  # One entry per country you can work in. Used for visa/sponsorship questions and the visa filter.
   - country: "India"
     authorized: true
     needs_sponsorship: false
-    
+
   - country: "UK"
     authorized: true
     needs_sponsorship: true
-    
+
   - country: "US (United States)"
     authorized: true
     needs_sponsorship: true
@@ -69,9 +80,7 @@ availability:
   notice_period_days: 30
 
 blacklist:
-  # Never apply to these.
-  companies: [Deloitte]
-  #  - Example Corp
-  # Reject a posting whose description contains any of these phrases.
+  companies:
+    - Deloitte
+
   description_keywords: []
-  #  - security clearance

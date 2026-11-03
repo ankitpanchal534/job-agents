@@ -4,7 +4,236 @@
 # Visa, salary, notice period, relocation, background checks and demographic questions are never
 # drafted: they are answered only from here and preferences.yaml, otherwise the agent asks you.
 
-faq: []
+# faq: []
 #  - question: "Why do you want to work here?"
 #    answer: ""
 #    tags: [motivation]
+
+faq:
+  # Employment and experience
+  - question: "Are you currently employed?"
+    answer: "Yes"
+    tags: [employment]
+
+  - question: "What is your current job title?"
+    answer: "Software Engineer II (Frontend)"
+    tags: [employment]
+
+  - question: "What is your current company?"
+    answer: "Deloitte"
+    tags: [employment]
+
+  - question: "How many years of professional experience do you have?"
+    answer: "4+ years"
+    tags: [experience]
+
+  - question: "How many years of experience do you have with React?"
+    answer: "4+ years"
+    tags: [experience, react]
+
+  - question: "How many years of experience do you have with JavaScript?"
+    answer: "4+ years"
+    tags: [experience, javascript]
+
+  - question: "How many years of experience do you have with TypeScript?"
+    answer: "4+ years"
+    tags: [experience, typescript]
+
+  # Education
+  - question: "What is your highest level of education?"
+    answer: "Bachelor of Technology (B.Tech) in Computer Science and Engineering"
+    tags: [education]
+
+  - question: "Which university did you graduate from?"
+    answer: "Mansarovar Global University"
+    tags: [education]
+
+  - question: "What year did you graduate?"
+    answer: "2023"
+    tags: [education]
+
+  # Technical skills
+  - question: "What are your primary technical skills?"
+    answer: "React, Next.js, JavaScript, TypeScript, Redux, TanStack Query, HTML5, CSS3, Tailwind CSS, Material UI, and frontend architecture."
+    tags: [skills]
+
+  - question: "Do you have experience with Next.js?"
+    answer: "Yes"
+    tags: [nextjs]
+
+  - question: "Do you have experience with Redux and state management?"
+    answer: "Yes. I've worked with Redux, React state management, and TanStack Query for server-state management."
+    tags: [state_management]
+
+  - question: "Do you have experience integrating REST APIs?"
+    answer: "Yes. I've integrated 200+ REST APIs across enterprise applications at Deloitte."
+    tags: [api]
+
+  - question: "Do you have experience with microfrontend architecture?"
+    answer: "Yes. I've developed enterprise applications using Microfrontend architecture at Deloitte."
+    tags: [architecture]
+
+  - question: "Do you have experience building reusable components?"
+    answer: "Yes. I've developed 50+ reusable React components and established shared component libraries using Storybook."
+    tags: [components]
+
+  - question: "Do you have experience with frontend performance optimization?"
+    answer: "Yes. My experience includes code splitting, lazy loading, tree shaking, virtualization, React.memo, useMemo, and useCallback."
+    tags: [performance]
+
+  - question: "Do you have experience with authentication and authorization?"
+    answer: "Yes. I've implemented Microsoft SSO, JWT authentication, and cookie-based authorization."
+    tags: [authentication]
+
+  - question: "Do you have experience with responsive web design?"
+    answer: "Yes. I've developed mobile-first and responsive web applications, including e-commerce platforms."
+    tags: [responsive_design]
+
+  - question: "Do you have experience with React Native?"
+    answer: "Yes. I've contributed to a React Native application used by 50,000+ users."
+    tags: [react_native]
+
+  - question: "Do you have experience with Python?"
+    answer: "Yes. Python is one of my technical skills."
+    tags: [python]
+
+  - question: "Do you have experience with frontend build tools?"
+    answer: "Yes. I've worked with Vite, Webpack, and Turborepo."
+    tags: [build_tools]
+
+  - question: "Do you have experience with data visualization?"
+    answer: "Yes. I've worked with Recharts and Chart.js to build interactive financial and business analytics dashboards."
+    tags: [visualization]
+
+  # Project experience and achievements
+  - question: "What is your most significant professional achievement?"
+    answer: "I've developed 50+ production screens, built 50+ reusable React components, and integrated 200+ REST APIs at Deloitte. I'm also the creator and maintainer of Reactuals, an open-source React utility library with 55+ reusable hooks."
+    tags: [achievements]
+
+  - question: "Have you worked on enterprise applications?"
+    answer: "Yes. At Deloitte, I've worked across three enterprise products within the Energy & Retail Industry practice, supporting applications used by 500+ business users."
+    tags: [enterprise]
+
+  - question: "Have you worked on financial applications?"
+    answer: "Yes. I developed a financial planning platform supporting ROI, NPV, IRR, payback period, project cost, and projected benefit calculations."
+    tags: [finance]
+
+  - question: "Have you developed SaaS applications?"
+    answer: "Yes. At Orufy Technologies, I led frontend development across multiple SaaS products, including a chatbot journey builder and configurable booking platform."
+    tags: [saas]
+
+  - question: "Have you built applications from scratch?"
+    answer: "Yes. At FlatHalt Technologies, I architected and developed a multi-tenant property rental platform and enterprise admin panel from scratch as the sole frontend owner."
+    tags: [ownership]
+
+  - question: "Have you worked on e-commerce applications?"
+    answer: "Yes. I developed a mobile-first e-commerce platform processing 10,000+ monthly orders at Shorea Softtech."
+    tags: [ecommerce]
+
+  - question: "Have you worked on mobile applications?"
+    answer: "Yes. At Shorea Softtech, I contributed to a React Native application used by 50,000+ users, delivering Refer & Earn and Digital Wallet features."
+    tags: [mobile]
+
+  - question: "Do you have open-source contributions?"
+    answer: "Yes. I'm the creator and maintainer of Reactuals, an open-source React utility library providing 55+ reusable hooks for state persistence, browser APIs, local storage, and frontend productivity."
+    tags: [opensource]
+
+  - question: "Have you mentored other developers?"
+    answer: "Yes. I've mentored three frontend engineers at Deloitte and supported developers through code reviews, architecture discussions, and engineering best practices."
+    tags: [mentoring]
+
+  # Motivation and screening
+  - question: "Tell me about yourself."
+    answer: "I'm a Frontend Engineer with 4+ years of experience building scalable web applications using React, Next.js, TypeScript, and JavaScript. Currently, I'm working at Deloitte, where I lead frontend development across enterprise products. My experience includes frontend architecture, API integration, performance optimization, and reusable component development. I'm also the creator and maintainer of Reactuals, an open-source React utility library with 55+ hooks."
+    tags: [introduction]
+
+  - question: "Why are you interested in this position?"
+    answer: "I'm interested in this position because it aligns with my experience in React, TypeScript, frontend architecture, and building scalable web applications. I'm looking for an opportunity to contribute to impactful products while continuing to grow as a frontend engineer."
+    tags: [motivation]
+
+  - question: "Why do you want to join our company?"
+    answer: "I'm interested in joining a company where I can work on challenging engineering problems, collaborate with talented engineers, and contribute to building scalable and high-quality products."
+    tags: [motivation]
+
+  - question: "Why are you looking for a new opportunity?"
+    answer: "I'm looking for new challenges, opportunities to work on scalable products, and further growth in frontend engineering and architecture."
+    tags: [motivation]
+
+  - question: "What makes you a good fit for this role?"
+    answer: "My experience building enterprise applications, SaaS platforms, reusable component libraries, and high-performance React applications makes me a strong fit. I bring hands-on expertise in React, TypeScript, API integration, frontend architecture, and performance optimization."
+    tags: [screening]
+
+  - question: "What are your career goals?"
+    answer: "I aim to grow as a frontend engineer, strengthen my expertise in scalable frontend architecture, contribute to engineering excellence, and take greater technical ownership."
+    tags: [career]
+
+  # Teamwork and work style
+  - question: "Do you have experience working in cross-functional teams?"
+    answer: "Yes. I've collaborated with product managers, designers, backend engineers, and enterprise stakeholders throughout the product development lifecycle."
+    tags: [teamwork]
+
+  - question: "Are you comfortable working independently?"
+    answer: "Yes. I've independently owned frontend architecture and development, including building a multi-tenant platform from scratch as the sole frontend engineer."
+    tags: [ownership]
+
+  - question: "Are you comfortable taking technical ownership?"
+    answer: "Yes. I've led frontend development across enterprise products and independently owned frontend architecture and delivery for a multi-tenant platform."
+    tags: [ownership]
+
+  - question: "Are you comfortable participating in code reviews?"
+    answer: "Yes. I've reviewed pull requests and contributed to frontend engineering standards."
+    tags: [code_review]
+
+  # Professional links
+  - question: "Please provide your portfolio URL."
+    answer: "https://ankit534.vercel.app"
+    tags: [links]
+
+  - question: "Please provide your LinkedIn profile."
+    answer: "https://linkedin.com/in/ankit-panchal534"
+    tags: [links]
+
+  - question: "Please provide your GitHub profile."
+    answer: "https://github.com/ankitpanchal534"
+    tags: [links]
+
+  - question: "Please provide your Topmate profile."
+    answer: "https://topmate.io/ankit_panchal"
+    tags: [links]
+
+  # Questions requiring your confirmation
+  - question: "Are you willing to undergo a background check?"
+    answer: "Yes"
+    tags: [background_check]
+
+  - question: "Can we contact your current employer?"
+    answer: "Yes"
+    tags: [references]
+
+  - question: "Can you provide professional references?"
+    answer: "Yes"
+    tags: [references]
+
+  - question: "Do you have any contractual restrictions or non-compete obligations?"
+    answer: "No"
+    tags: [legal]
+
+  - question: "Are you willing to travel for work?"
+    answer: "Yes"
+    tags: [travel]
+
+  - question: "Are you willing to work night shifts?"
+    answer: "Yes"
+    tags: [availability]
+
+  - question: "Are you willing to work weekends?"
+    answer: "No"
+    tags: [availability]
+
+  - question: "Do you have experience with automated frontend testing?"
+    answer: "No"
+    tags: [testing]
+
+  - question: "Do you have experience with accessibility standards such as WCAG?"
+    answer: "Yes"
+    tags: [accessibility]

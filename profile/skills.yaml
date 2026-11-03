@@ -3,8 +3,167 @@
 # tier:  core      = what you want to be hired for
 #        secondary = you can do it, but it is not your focus
 
-skills: []
-#  - name: React
-#    years: 3
-#    level: advanced
-#    tier: core
+skills:
+  # Core frontend
+  - name: React
+    years: 4
+    level: advanced
+    tier: core
+  - name: JavaScript (ES6+)
+    years: 4
+    level: advanced
+    tier: core
+  - name: TypeScript
+    years: 3
+    level: advanced
+    tier: core
+  - name: Next.js
+    years: 3
+    level: advanced
+    tier: core
+  - name: HTML5
+    years: 4
+    level: advanced
+    tier: core
+  - name: CSS3
+    years: 4
+    level: advanced
+    tier: core
+
+  # State management and data
+  - name: Redux
+    years: 3
+    level: advanced
+    tier: core
+  - name: TanStack Query
+    years: 2
+    level: advanced
+    tier: core
+  - name: React Router
+    years: 3
+    level: advanced
+    tier: core
+  - name: TanStack Router
+    years: 4
+    level: intermediate
+    tier: secondary
+
+  # UI and styling
+  - name: Tailwind CSS
+    years: 3
+    level: advanced
+    tier: core
+  - name: Material UI
+    years: 4.5
+    level: advanced
+    tier: secondary
+  - name: Radix UI
+    years: 3
+    level: intermediate
+    tier: secondary
+  - name: shadcn/ui
+    years: 4
+    level: intermediate
+    tier: secondary
+
+  # Frontend architecture and optimization
+  - name: Microfrontends
+    years: 2
+    level: advanced
+    tier: core
+  - name: Component Libraries
+    years: 3
+    level: advanced
+    tier: core
+  - name: Performance Optimization
+    years: 3
+    level: advanced
+    tier: core
+  - name: Code Splitting
+    years: 3
+    level: advanced
+    tier: secondary
+  - name: Lazy Loading
+    years: 3
+    level: advanced
+    tier: secondary
+  - name: SEO
+    years: 2
+    level: intermediate
+    tier: secondary
+
+  # Programming languages
+  - name: Python
+    years: 1
+    level: intermediate
+    tier: secondary
+
+  # Frameworks and libraries
+  - name: Svelte
+    years: 1
+    level: intermediate
+    tier: secondary
+  - name: Recharts
+    years: 1
+    level: intermediate
+    tier: secondary
+  - name: Chart.js
+    years: 1
+    level: intermediate
+    tier: secondary
+  - name: React Flow
+    years: 1
+    level: intermediate
+    tier: secondary
+  - name: React Native
+    years: 1
+    level: intermediate
+    tier: secondary
+
+  # Build tools and developer tools
+  - name: Git
+    years: 4
+    level: advanced
+    tier: core
+  - name: Vite
+    years: 3
+    level: advanced
+    tier: secondary
+  - name: Webpack
+    years: 2
+    level: intermediate
+    tier: secondary
+  - name: Turborepo
+    years: 1
+    level: intermediate
+    tier: secondary
+  - name: Storybook
+    years: 2
+    level: advanced
+    tier: secondary
+  - name: Docusaurus
+    years: 1
+    level: intermediate
+    tier: secondary
+  - name: Figma
+    years: 2
+    level: intermediate
+    tier: secondary
+
+  # Additional engineering skills
+  - name: REST API Integration
+    years: 4
+    level: advanced
+    tier: core
+  - name: JWT Authentication
+    years: 2
+    level: advanced
+    tier: secondary
+  - name: Microsoft SSO
+    years: 1
+    level: intermediate
+    tier: secondary
+  - name: CI/CD
+    years: 2
+    level: intermediate
+    tier: secondary

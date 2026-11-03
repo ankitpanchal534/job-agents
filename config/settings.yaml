@@ -99,7 +99,10 @@ storage:
 guardrails:
   # The applicant may only open pages on these domains (and their subdomains).
   # Empty means nothing is allowed, so add the portals you actually use.
-  allowed_domains: []
+  allowed_domains: 
+    - greenhouse.io
+    - lever.co
+    - ashbyhq.com
   #  - greenhouse.io
   #  - lever.co
   #  - ashbyhq.com

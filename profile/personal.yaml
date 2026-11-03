@@ -1,17 +1,19 @@
 # Your personal details, used to fill application forms.
 # Facts only: leave a field empty rather than guess. Run `python -m jobagent check-config` to validate.
 
-full_name: ""
-email: ""            # use your dedicated job-search address
-phone: ""
-city: ""
-country: ""
+full_name: "Ankit Kumar"
+email: "ankitpanchal534@gmail.com"
+phone: "+91 9568376762"
+city: "Gurgaon"
+country: "India"
 
-languages: []
-#  - English
+languages:
+  - Hindi
+  - English
 
 links:
-  linkedin: ""
-  github: ""
-  portfolio: ""
-  other: []
+  linkedin: "https://linkedin.com/in/ankit-panchal534"
+  github: "https://github.com/ankitpanchal534"
+  portfolio: "https://ankit534.vercel.app"
+  other:
+    - "https://topmate.io/ankit_panchal"

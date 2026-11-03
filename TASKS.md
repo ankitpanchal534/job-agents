@@ -57,3 +57,4 @@ MacBook setup completed via `uv`: `.venv` configured with `uv pip install -e ".[
 - P3: `jd.py` (lenient extraction model), `filters.py` (nine hard filters), `matcher.py` (scoring, decision, `match_job`), `fetch.py`, `calibrate.py`, `evaluations` table, `jobagent match` and `jobagent calibrate`, `calibration/labels.yaml` template.
 - Handover: wrote `HANDOVER.md` (briefing for a new LLM: built, verified, left, gotchas) and `MACBOOK_SETUP.md` (moving to macOS and running with Ollama). Checked the Windows `tar` zip command in the guide: 9.3 MB, no `.venv`, `.env` or `data`.
 - MacBook setup (uv): installed dev/ui dependencies with uv, created 8k-context Ollama model qwen2.5-coder-7b-8k:latest, updated settings.yaml (provider: local, desktop notifications: false), verified check-config, models, llm-test (0.4s response), notify-test, and all 236 pytest tests.
+- Documentation: created comprehensive usage and post-setup run instructions in README.md.

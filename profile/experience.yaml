@@ -2,14 +2,103 @@
 # Dates are YYYY-MM; use "present" for a current job.
 # The three summaries let the agent pick the length a form field allows.
 
-roles: []
-#  - company: ""
-#    title: ""
-#    start: "2022-01"
-#    end: present
-#    location: ""
-#    summary_short: ""      # one line
-#    summary_medium: ""     # 3-4 lines
-#    summary_long: ""       # full detail
-#    achievements: []
-#    tech: []
+roles:
+  - company: "Deloitte"
+    title: "Software Engineer II (Frontend)"
+    start: "2025-04"
+    end: present
+    location: "India"
+    summary_short: "Led frontend development across three enterprise products, building scalable financial planning platforms and reusable microfrontend architectures."
+    summary_medium: "Led frontend development across three enterprise products: ROI Calculator, Value Tracking, and Strategy & Value Mapper. Built financial planning capabilities with real-time ROI, NPV, IRR, and payback calculations. Developed 50+ production screens, 50+ reusable components, and integrated 200+ REST APIs. Mentored three frontend engineers."
+    summary_long: "Led frontend development across three enterprise products (ROI Calculator, Value Tracking, and Strategy & Value Mapper) within Deloitte's Energy & Retail Industry practice, collaborating with product managers and enterprise stakeholders from requirements through production delivery. Designed and developed a financial planning platform supporting dynamic investment modeling with real-time ROI, NPV, IRR, payback period, project cost, and projected benefit calculations using React, TypeScript, Redux, TanStack Query, and Recharts. Developed 50+ production screens and 50+ reusable React components within a Microfrontend architecture, establishing a shared UI foundation across multiple enterprise applications. Integrated 200+ REST APIs while implementing Microsoft SSO, JWT authentication, cookie-based authorization, and efficient asynchronous data management using TanStack Query. Improved application maintainability and performance through reusable component patterns, conditional rendering, route-level code splitting, lazy loading, virtualization, React.memo, useMemo, useCallback, and systematic frontend refactoring. Mentored three frontend engineers, reviewed pull requests, and contributed to engineering standards across applications supporting 500+ business users."
+    achievements:
+      - "Led frontend development across three enterprise products."
+      - "Built 50+ production screens and 50+ reusable React components."
+      - "Integrated 200+ REST APIs."
+      - "Implemented Microsoft SSO, JWT authentication, and cookie-based authorization."
+      - "Improved application performance through code splitting, lazy loading, virtualization, and React optimization techniques."
+      - "Mentored three frontend engineers."
+      - "Contributed to applications supporting 500+ business users."
+    tech:
+      - React
+      - TypeScript
+      - Redux
+      - TanStack Query
+      - Recharts
+      - Microfrontends
+      - REST APIs
+      - Microsoft SSO
+      - JWT
+      - React.memo
+      - useMemo
+      - useCallback
+
+  - company: "Orufy Technologies"
+    title: "Software Engineer II - Frontend"
+    start: "2024-07"
+    end: "2025-03"
+    location: "India"
+    summary_short: "Led frontend development for SaaS products, building visual chatbot journey builders, configurable booking platforms, and shared component libraries."
+    summary_medium: "Led frontend development across multiple SaaS products using React and TypeScript. Built a drag-and-drop chatbot journey builder using React Flow and a configurable booking platform with dynamic forms and real-time previews. Introduced Storybook and established a shared component library. Mentored frontend developers and optimized application performance."
+    summary_long: "Led frontend development across multiple SaaS products using React and TypeScript, collaborating directly with founders, designers, and backend engineers. Built a drag-and-drop chatbot journey builder using React Flow, enabling non-technical users to configure complex conversational workflows visually. Developed a configurable booking platform with dynamic forms, conditional workflows, and real-time previews for customizable business onboarding. Introduced Storybook and established a shared component library, improving design consistency and reducing duplicate frontend implementation. Optimized frontend performance through code splitting, tree shaking, lazy loading, and bundle optimization techniques. Mentored frontend developers through pull request reviews, architecture discussions, and engineering best practices."
+    achievements:
+      - "Built a visual drag-and-drop chatbot journey builder using React Flow."
+      - "Developed a configurable booking platform with dynamic forms and conditional workflows."
+      - "Introduced Storybook and established a shared component library."
+      - "Improved frontend performance through code splitting, tree shaking, and lazy loading."
+      - "Mentored frontend developers."
+    tech:
+      - React
+      - TypeScript
+      - React Flow
+      - Storybook
+      - JavaScript
+      - Code Splitting
+      - Tree Shaking
+      - Lazy Loading
+
+  - company: "FlatHalt Technologies"
+    title: "Founding Frontend Engineer"
+    start: "2023-11"
+    end: "2024-06"
+    location: "India"
+    summary_short: "Architected and built a multi-tenant property rental platform and enterprise admin panel from scratch as the sole frontend owner."
+    summary_medium: "Architected and developed a multi-tenant property rental platform and enterprise admin panel from the ground up. Owned the complete frontend lifecycle, including architecture, state management, tenant-isolated routing, and reusable UI components. Supported 5,000+ active users while maintaining zero cross-tenant state pollution."
+    summary_long: "Architected and built a multi-tenant property rental platform and its enterprise admin panel from scratch as the sole frontend owner, handling the complete frontend lifecycle from greenfield setup to production. Designed scalable state management, tenant-isolated routing, and high-performance UI components using React and TypeScript, supporting 5,000+ active users with zero cross-tenant state pollution. Spearheaded performance optimization and component design standards, reducing initial page load times and streamlining UI maintenance across complex administrative dashboards."
+    achievements:
+      - "Built a multi-tenant property rental platform from scratch."
+      - "Developed the enterprise admin panel as the sole frontend owner."
+      - "Supported 5,000+ active users."
+      - "Implemented tenant-isolated routing and scalable state management."
+      - "Maintained zero cross-tenant state pollution."
+      - "Improved page load performance and UI maintainability."
+    tech:
+      - React
+      - TypeScript
+      - JavaScript
+      - Multi-tenant Architecture
+      - State Management
+      - Performance Optimization
+
+  - company: "Shorea Softtech"
+    title: "Frontend Engineer"
+    start: "2022-01"
+    end: "2023-10"
+    location: "India"
+    summary_short: "Developed a mobile-first e-commerce platform, interactive analytics dashboards, and customer-facing React Native features."
+    summary_medium: "Developed a mobile-first e-commerce platform processing 10,000+ monthly orders, focusing on responsive UI, SEO, and performance. Built interactive analytics dashboards using React and Chart.js for Sales and Finance teams. Contributed to a React Native application serving 50,000+ users."
+    summary_long: "Developed a mobile-first e-commerce platform processing 10,000+ monthly orders with a strong focus on responsive UI, SEO, and performance. Built interactive analytics dashboards using React and Chart.js, enabling Sales and Finance teams to monitor business KPIs through real-time visualizations. Contributed to a React Native application used by 50,000+ users by delivering customer-facing features including Refer & Earn and Digital Wallet."
+    achievements:
+      - "Developed a mobile-first e-commerce platform processing 10,000+ monthly orders."
+      - "Built interactive analytics dashboards for Sales and Finance teams."
+      - "Contributed to a React Native application used by 50,000+ users."
+      - "Delivered Refer & Earn and Digital Wallet features."
+    tech:
+      - React
+      - React Native
+      - JavaScript
+      - Chart.js
+      - HTML5
+      - CSS3
+      - SEO
+      - Responsive Design
