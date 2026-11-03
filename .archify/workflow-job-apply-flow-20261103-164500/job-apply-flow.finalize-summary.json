@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "status": "fail",
+  "type": "workflow",
+  "quality": "showcase",
+  "specification": {
+    "path": "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\candidate.json",
+    "sha256": "ed7d115fecff33ddb795059224a852f04eefabc2dbf28efe32c71b6b0f467fb9",
+    "bytes": 5805
+  },
+  "artifact": {
+    "path": "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\job-apply-flow.html",
+    "sha256": "9ec0900a3cfb975ff7b47219f992604e7c2ecba1897043573f81e3c370ba4a04",
+    "bytes": 856943
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "fail"
+  },
+  "failedStage": "browser-check",
+  "diagnostics": [
+    {
+      "code": "viewer/chrome-startup-timeout",
+      "severity": "error",
+      "message": "Chrome did not finish its initial DevTools handshake within the startup window.",
+      "subject": {
+        "artifact": "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\job-apply-flow.html"
+      },
+      "evidence": {
+        "reason": "Chrome DevTools protocol timeout failed: Target.getTargets: timed out after 90000ms [ERR_CHROME_CDP_TIMEOUT]\nChrome process: still running.\nChrome stderr:\n[32656:34768:1103/164236.274:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164236.777:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164237.277:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164237.566:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164237.777:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164237.784:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164238.187:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164238.787:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164238.798:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164239.611:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164239.796:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164240.616:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164240.806:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164241.625:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164241.815:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164242.628:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164242.829:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164243.640:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164243.839:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164244.648:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164244.846:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164245.657:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164245.854:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164246.663:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164246.855:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164247.679:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164247.860:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164248.688:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164248.870:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164249.697:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164249.879:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164250.712:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164250.887:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164251.718:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164251.895:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164252.721:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164253.729:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164254.737:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164255.745:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164256.758:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164257.794:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164258.825:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164259.837:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164300.840:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164301.852:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164302.870:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164303.877:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164304.894:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164305.901:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\r\n[32656:34768:1103/164306.912:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 29496: Access is denied. (0x5)\nWindows browser startup may have relaunched before connecting to the DevTools pipe. Retry from a non-elevated PowerShell opened normally, outside an elevated or compatibility-mode parent. Archify does not disable browser de-elevation or the sandbox to preserve pipe handles.\nChrome transport: Node v26.12.1, libuv 1.52.1, win32; pid=32656, exitCode=null, signalCode=null.\nChrome read pipe: readable=true, ended=false, destroyed=false, receivedBytes=0, messages=0, bufferedBytes=0.\nChrome write pipe: writable=true, ended=false, destroyed=false, completedWrites=1, writtenBytes=50, bufferedBytes=0."
+      },
+      "supportedFixes": [
+        "do not edit or simplify the artifact because this is a browser-startup failure",
+        "retry browser-check once after host load subsides; if it repeats, stop and report the environment failure"
+      ]
+    }
+  ],
+  "diagnosticSummary": {
+    "total": 1,
+    "shown": 1,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\job-apply-flow.finalize.json",
+    "summaryReceipt": "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\job-apply-flow.finalize-summary.json",
+    "browserCheckReceipt": "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\job-apply-flow.browser-check.json"
+  },
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-11-03T11:11:40.824Z",
+    "source": "network",
+    "noticeRequired": false,
+    "noticeText": null
+  },
+  "visualReview": "not-requested",
+  "durationMs": 99032,
+  "browserCheck": {
+    "requested": true,
+    "ran": false
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "5d00fd29-e2ab-4d3d-9835-fc0baf4f12e2",
+  "status": "current",
+  "command": "deliver",
+  "type": "workflow",
+  "input": "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\candidate.json",
+  "output": "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\job-apply-flow.html",
+  "specification": {
+    "sha256": "d62a40f6cf806f0ffce83580353bb2ee243c8dc5d1c022e54e8b55fde74a3221",
+    "bytes": 8145
+  },
+  "artifact": {
+    "sha256": "94149ac079b21bbabe0e07d6a3cb4dac1dfb42dc61549abcbc0a5c8f7d69adf9",
+    "bytes": 858834
+  }
+}

@@ -1,0 +1,357 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Job-apply agent: planned flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": ".archify/workflow-job-apply-flow-20261103-164500/job-apply-flow.html"
+  },
+  "lanes": [
+    {
+      "id": "human",
+      "label": "Inputs and human loop"
+    },
+    {
+      "id": "pipeline",
+      "label": "Agent pipeline"
+    },
+    {
+      "id": "data",
+      "label": "Data and tools"
+    }
+  ],
+  "phases": [
+    {
+      "id": "discover",
+      "label": "Discover",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "match",
+      "label": "Match",
+      "fromCol": 1,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "apply",
+      "label": "Apply and verify",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "groups": [
+    {
+      "id": "handoff",
+      "label": "Human handoff",
+      "lane": "human",
+      "fromCol": 3,
+      "toCol": 4,
+      "variant": "security"
+    }
+  ],
+  "mainPath": [
+    "discovery",
+    "parse",
+    "filters",
+    "score",
+    "applicant",
+    "submit"
+  ],
+  "nodes": [
+    {
+      "id": "sources",
+      "lane": "human",
+      "col": 0,
+      "type": "cloud",
+      "label": "Job sources",
+      "sublabel": "ATS boards, APIs"
+    },
+    {
+      "id": "discovery",
+      "lane": "pipeline",
+      "col": 0,
+      "type": "backend",
+      "label": "Discovery agent",
+      "sublabel": "search, collect links",
+      "tag": "later"
+    },
+    {
+      "id": "parse",
+      "lane": "pipeline",
+      "col": 1,
+      "type": "backend",
+      "label": "Fetch + parse JD",
+      "sublabel": "LLM extracts fields",
+      "tag": "P3"
+    },
+    {
+      "id": "filters",
+      "lane": "pipeline",
+      "col": 2,
+      "type": "security",
+      "label": "Hard filters",
+      "sublabel": "fail = reject, logged",
+      "tag": "P3"
+    },
+    {
+      "id": "score",
+      "lane": "pipeline",
+      "col": 3,
+      "type": "backend",
+      "label": "Skill score",
+      "sublabel": "50-75 = watch-later",
+      "tag": "P3"
+    },
+    {
+      "id": "applicant",
+      "lane": "pipeline",
+      "col": 4,
+      "type": "backend",
+      "label": "Applicant agent",
+      "sublabel": "fills the form",
+      "tag": "later"
+    },
+    {
+      "id": "submit",
+      "lane": "pipeline",
+      "col": 5,
+      "type": "backend",
+      "label": "Submit + verify",
+      "sublabel": "confirm it landed",
+      "tag": "later"
+    },
+    {
+      "id": "tracker",
+      "lane": "data",
+      "col": 1,
+      "type": "database",
+      "label": "Job tracker",
+      "sublabel": "link, summary, score, status",
+      "tag": "P1"
+    },
+    {
+      "id": "profile",
+      "lane": "data",
+      "col": 2,
+      "type": "database",
+      "label": "Profile files",
+      "sublabel": "skills + preferences",
+      "tag": "P1"
+    },
+    {
+      "id": "resolver",
+      "lane": "data",
+      "col": 4,
+      "type": "backend",
+      "label": "Answer resolver",
+      "sublabel": "field, FAQ, LLM, block",
+      "tag": "P2"
+    },
+    {
+      "id": "email",
+      "lane": "human",
+      "col": 5,
+      "type": "external",
+      "label": "Email inbox",
+      "sublabel": "OTP, verify link",
+      "tag": "later"
+    },
+    {
+      "id": "notifier",
+      "lane": "human",
+      "col": 4,
+      "type": "messagebus",
+      "label": "Notifier",
+      "sublabel": "sound + phone push",
+      "tag": "P4"
+    },
+    {
+      "id": "you",
+      "lane": "human",
+      "col": 3,
+      "type": "external",
+      "label": "You",
+      "sublabel": "solve, review",
+      "icon": "person"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-sources",
+      "from": "sources",
+      "to": "discovery",
+      "label": "postings",
+      "variant": "default"
+    },
+    {
+      "id": "e-url",
+      "from": "discovery",
+      "to": "parse",
+      "label": "URL",
+      "variant": "default"
+    },
+    {
+      "id": "e-fields",
+      "from": "parse",
+      "to": "filters",
+      "label": "fields",
+      "variant": "default"
+    },
+    {
+      "id": "e-pass",
+      "from": "filters",
+      "to": "score",
+      "label": "pass",
+      "variant": "security"
+    },
+    {
+      "id": "e-apply",
+      "from": "score",
+      "to": "applicant",
+      "label": ">= 75%",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-save",
+      "from": "discovery",
+      "to": "tracker",
+      "label": "save link",
+      "variant": "dashed"
+    },
+    {
+      "id": "e-summary",
+      "from": "parse",
+      "to": "tracker",
+      "label": "JD summary",
+      "variant": "dashed"
+    },
+    {
+      "id": "e-track",
+      "from": "score",
+      "to": "tracker",
+      "label": "score + status",
+      "variant": "dashed"
+    },
+    {
+      "id": "e-prefs",
+      "from": "profile",
+      "to": "filters",
+      "label": "prefs",
+      "variant": "dashed"
+    },
+    {
+      "id": "e-skills",
+      "from": "profile",
+      "to": "score",
+      "label": "skills",
+      "variant": "dashed"
+    },
+    {
+      "id": "e-answers",
+      "from": "resolver",
+      "to": "applicant",
+      "label": "answers",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-form",
+      "from": "applicant",
+      "to": "submit",
+      "variant": "default"
+    },
+    {
+      "id": "e-otp",
+      "from": "email",
+      "to": "submit",
+      "label": "OTP / link",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-blocked",
+      "from": "applicant",
+      "to": "notifier",
+      "label": "blocked",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "e-captcha",
+      "from": "submit",
+      "to": "notifier",
+      "label": "CAPTCHA",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "e-alert",
+      "from": "notifier",
+      "to": "you",
+      "label": "alert",
+      "variant": "security"
+    },
+    {
+      "id": "e-resume",
+      "from": "you",
+      "to": "applicant",
+      "label": "resume",
+      "variant": "dashed",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Job tracker (P1)",
+      "items": [
+        "One row per job, created the moment its link is found",
+        "Stores link, company, summarised JD, match score, reasons, missing skills",
+        "Status: new, rejected, watch-later, queued, blocked, applied, failed",
+        "Updated at every stage, including applied or failed after submit",
+        "Also blocks duplicate applications"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Answer resolver (P2)",
+      "items": [
+        "1. Direct field from the profile files",
+        "2. Curated FAQ match, used verbatim",
+        "3. Grounded LLM draft, queued for your review",
+        "4. No supporting fact: block and notify",
+        "Never generated: visa, salary, notice period, background, EEO"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Matcher decision (P3)",
+      "items": [
+        "Hard filters run first: location, seniority, salary, visa, blacklist, duplicates",
+        "Score 75 or more goes to the apply queue",
+        "Score 50 to 75 is kept as watch-later, with a reason",
+        "Below 50 is rejected and logged"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Human handoff (P4)",
+      "items": [
+        "Blocks: CAPTCHA, expired login, unknown question, unconfirmed submit",
+        "Phone push with screenshot; the agent moves on to other jobs",
+        "You resolve one job, then resume it"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Reading the tags",
+      "items": [
+        "P1 to P4 are phases of the foundation plan",
+        "later: discovery, applicant, email verification",
+        "Guardrails now: matcher has no tools, domain allowlist"
+      ]
+    }
+  ]
+}

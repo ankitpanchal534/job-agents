@@ -1,0 +1,368 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "status": "fail",
+  "type": "workflow",
+  "quality": "showcase",
+  "startedAt": "2026-11-03T16:47:43.143Z",
+  "specification": {
+    "path": "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\candidate.json",
+    "sha256": "d62a40f6cf806f0ffce83580353bb2ee243c8dc5d1c022e54e8b55fde74a3221",
+    "bytes": 8145
+  },
+  "artifact": {
+    "path": "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\job-apply-flow.html",
+    "sha256": "94149ac079b21bbabe0e07d6a3cb4dac1dfb42dc61549abcbc0a5c8f7d69adf9",
+    "bytes": 858834
+  },
+  "stages": {
+    "validate": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": null,
+      "execution": "embedded-in-deliver",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.claude\\skills\\archify\\bin\\archify.mjs",
+        "deliver",
+        "workflow",
+        "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\candidate.json",
+        "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\job-apply-flow.html",
+        "--quality",
+        "showcase",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": true,
+        "command": "validate",
+        "specification": {
+          "sha256": "d62a40f6cf806f0ffce83580353bb2ee243c8dc5d1c022e54e8b55fde74a3221",
+          "bytes": 8145
+        },
+        "validation": {
+          "checksPassed": 9,
+          "checkCount": 9,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        }
+      }
+    },
+    "deliver": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 1651,
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.claude\\skills\\archify\\bin\\archify.mjs",
+        "deliver",
+        "workflow",
+        "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\candidate.json",
+        "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\job-apply-flow.html",
+        "--quality",
+        "showcase",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "receiptId": "5d00fd29-e2ab-4d3d-9835-fc0baf4f12e2",
+        "ok": true,
+        "command": "deliver",
+        "type": "workflow",
+        "input": "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\candidate.json",
+        "output": "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\job-apply-flow.html",
+        "specification": {
+          "sha256": "d62a40f6cf806f0ffce83580353bb2ee243c8dc5d1c022e54e8b55fde74a3221",
+          "bytes": 8145
+        },
+        "artifact": {
+          "sha256": "94149ac079b21bbabe0e07d6a3cb4dac1dfb42dc61549abcbc0a5c8f7d69adf9",
+          "bytes": 858834
+        },
+        "validation": {
+          "checksPassed": 9,
+          "checkCount": 9,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        },
+        "update": {
+          "status": "unavailable",
+          "installedVersion": null,
+          "availableVersion": null,
+          "releaseNotes": null,
+          "checkedAt": null,
+          "source": null,
+          "noticeRequired": false,
+          "noticeText": null,
+          "reason": "disabled"
+        }
+      }
+    },
+    "check": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 597,
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.claude\\skills\\archify\\bin\\archify.mjs",
+        "check",
+        "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\job-apply-flow.html",
+        "--require-provenance"
+      ],
+      "receipt": {
+        "ok": true,
+        "file": "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\job-apply-flow.html",
+        "artifact": {
+          "sha256": "94149ac079b21bbabe0e07d6a3cb4dac1dfb42dc61549abcbc0a5c8f7d69adf9",
+          "bytes": 858834
+        },
+        "checks": [
+          {
+            "name": "single_svg",
+            "ok": true,
+            "details": [
+              "found 1 <svg> block(s)"
+            ]
+          },
+          {
+            "name": "finite_svg",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "orthogonal_arrows",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "label_route_clearance",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "relationship_crossings",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "relationship_corridors",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "container_border_runs",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "route_rhythm",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "legend_clearance",
+            "ok": true,
+            "details": []
+          }
+        ],
+        "composition": {
+          "schemaVersion": 1,
+          "profile": "showcase",
+          "status": "pass",
+          "summary": {
+            "errors": 0,
+            "warnings": 0
+          },
+          "metrics": {
+            "properCrossings": 0,
+            "resolvedCrossovers": 0,
+            "ambiguousCorridors": 0,
+            "arrowheadCollisions": 0,
+            "containerBorderRuns": 0,
+            "labelRouteClearanceIssues": 0,
+            "labelCanvasOverflowIssues": 0,
+            "minLabelRouteClearance": 13.9,
+            "desktopReadabilityIssues": 0,
+            "viewportHeightIssues": 0,
+            "minProjectedNodeTextPx": 6.6,
+            "maxBends": 0,
+            "routesOverSuggestedBends": 0,
+            "maxStretch": 1,
+            "routesOverSuggestedStretch": 0,
+            "minSegmentPx": 8,
+            "minInteriorSegmentPx": null,
+            "shortSegmentCount": 7,
+            "shortEndpointSegmentCount": 7,
+            "shortInteriorSegmentCount": 0,
+            "microSegmentCount": 0
+          },
+          "suggestedLimits": {
+            "bendsPerRelationship": 2,
+            "stretch": 1.35,
+            "segmentPx": 16,
+            "microSegmentPx": 8
+          },
+          "routeReview": {
+            "crossings": [],
+            "detours": []
+          },
+          "leadingSpace": {
+            "measured": false,
+            "reviewSuggested": false
+          },
+          "desktopReadability": {
+            "budgetBasis": "legacy-930",
+            "readerContract": "declared-wide-v1",
+            "availableDiagramWidth": 930,
+            "actualBudgetPx": 930,
+            "limit": "legacy",
+            "requestedTargetPx": null,
+            "requestedTargetMet": null,
+            "hardFloorPx": 6,
+            "hardFloorMet": true,
+            "minimumOwner": {
+              "kind": "node",
+              "id": "filters"
+            },
+            "minimumSourceTextPx": 6.6,
+            "minimumProjectedTextPx": 6.6,
+            "semanticTextCount": 42
+          },
+          "issues": []
+        },
+        "provenance": "current",
+        "deliveryReceiptId": "5d00fd29-e2ab-4d3d-9835-fc0baf4f12e2"
+      }
+    },
+    "browser-check": {
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 90779,
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.claude\\skills\\archify\\bin\\archify.mjs",
+        "browser-check",
+        "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\job-apply-flow.html",
+        "--json",
+        "--require-provenance",
+        "--out-dir",
+        "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\review-2"
+      ],
+      "execution": "in-process",
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": false,
+        "command": "browser-check",
+        "evidenceKind": "automated-browser",
+        "status": "fail",
+        "visualReview": "not-requested",
+        "provenance": "current",
+        "deliveryReceiptId": "5d00fd29-e2ab-4d3d-9835-fc0baf4f12e2",
+        "artifact": {
+          "path": "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\job-apply-flow.html",
+          "sha256": "94149ac079b21bbabe0e07d6a3cb4dac1dfb42dc61549abcbc0a5c8f7d69adf9",
+          "bytes": 858834
+        },
+        "state": {
+          "detail": "read",
+          "motion": "still"
+        },
+        "chrome": {
+          "status": "available",
+          "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+        },
+        "diagnostics": [
+          {
+            "code": "viewer/chrome-startup-timeout",
+            "severity": "error",
+            "message": "Chrome did not finish its initial DevTools handshake within the startup window.",
+            "subject": {
+              "artifact": "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\job-apply-flow.html"
+            },
+            "evidence": {
+              "reason": "Chrome DevTools protocol timeout failed: Target.getTargets: timed out after 90000ms [ERR_CHROME_CDP_TIMEOUT]\nChrome process: still running.\nChrome stderr:\n_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221835.640:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221836.041:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221836.657:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221836.891:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221837.047:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221837.107:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221837.523:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221838.056:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221838.126:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221838.939:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221839.058:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221839.955:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221840.064:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221840.956:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221841.073:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221841.958:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221842.089:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221842.964:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221843.108:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221843.973:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221844.114:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221844.989:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221845.123:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221845.991:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221846.125:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221847.005:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221847.130:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221848.022:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221848.139:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221849.039:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221849.142:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221850.056:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221850.155:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221851.064:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221851.158:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221852.073:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221853.081:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221854.089:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221855.104:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221856.106:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221857.108:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221858.122:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221859.127:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221900.139:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221901.157:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221902.173:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221903.189:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221904.193:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221905.205:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221906.206:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\nWindows browser startup may have relaunched before connecting to the DevTools pipe. Retry from a non-elevated PowerShell opened normally, outside an elevated or compatibility-mode parent. Archify does not disable browser de-elevation or the sandbox to preserve pipe handles.\nChrome transport: Node v26.12.1, libuv 1.52.1, win32; pid=2724, exitCode=null, signalCode=null.\nChrome read pipe: readable=true, ended=false, destroyed=false, receivedBytes=0, messages=0, bufferedBytes=0.\nChrome write pipe: writable=true, ended=false, destroyed=false, completedWrites=1, writtenBytes=50, bufferedBytes=0."
+            },
+            "supportedFixes": [
+              "do not edit or simplify the artifact because this is a browser-startup failure",
+              "retry browser-check once after host load subsides; if it repeats, stop and report the environment failure"
+            ]
+          }
+        ],
+        "containment": {
+          "status": "fail",
+          "policy": "fit-or-reader-declared-readable-vertical-scroll",
+          "viewports": []
+        },
+        "themeStates": {
+          "status": "fail",
+          "viewports": []
+        },
+        "readability": {
+          "status": "fail",
+          "minimumProjectedNodeTextPx": 6,
+          "viewports": []
+        },
+        "viewerChrome": {
+          "status": "fail",
+          "viewports": []
+        },
+        "captures": {
+          "status": "not-requested",
+          "screenshots": [],
+          "contactSheet": null
+        },
+        "sidecars": {
+          "directory": "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\review-2",
+          "receipt": "job-apply-flow.browser-check.json",
+          "files": []
+        },
+        "error": "Chrome DevTools protocol timeout failed: Target.getTargets: timed out after 90000ms [ERR_CHROME_CDP_TIMEOUT]\nChrome process: still running.\nChrome stderr:\n_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221835.640:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221836.041:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221836.657:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221836.891:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221837.047:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221837.107:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221837.523:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221838.056:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221838.126:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221838.939:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221839.058:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221839.955:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221840.064:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221840.956:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221841.073:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221841.958:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221842.089:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221842.964:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221843.108:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221843.973:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221844.114:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221844.989:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221845.123:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221845.991:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221846.125:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221847.005:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221847.130:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221848.022:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221848.139:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221849.039:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221849.142:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221850.056:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221850.155:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221851.064:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221851.158:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221852.073:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221853.081:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221854.089:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221855.104:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221856.106:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221857.108:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221858.122:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221859.127:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221900.139:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221901.157:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221902.173:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221903.189:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221904.193:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221905.205:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221906.206:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\nWindows browser startup may have relaunched before connecting to the DevTools pipe. Retry from a non-elevated PowerShell opened normally, outside an elevated or compatibility-mode parent. Archify does not disable browser de-elevation or the sandbox to preserve pipe handles.\nChrome transport: Node v26.12.1, libuv 1.52.1, win32; pid=2724, exitCode=null, signalCode=null.\nChrome read pipe: readable=true, ended=false, destroyed=false, receivedBytes=0, messages=0, bufferedBytes=0.\nChrome write pipe: writable=true, ended=false, destroyed=false, completedWrites=1, writtenBytes=50, bufferedBytes=0."
+      }
+    }
+  },
+  "browserCheck": {
+    "requested": true,
+    "ran": false
+  },
+  "diagnostics": [
+    {
+      "code": "viewer/chrome-startup-timeout",
+      "severity": "error",
+      "message": "Chrome did not finish its initial DevTools handshake within the startup window.",
+      "subject": {
+        "artifact": "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\job-apply-flow.html"
+      },
+      "evidence": {
+        "reason": "Chrome DevTools protocol timeout failed: Target.getTargets: timed out after 90000ms [ERR_CHROME_CDP_TIMEOUT]\nChrome process: still running.\nChrome stderr:\n_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221835.640:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221836.041:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221836.657:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221836.891:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221837.047:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221837.107:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221837.523:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221838.056:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221838.126:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221838.939:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221839.058:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221839.955:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221840.064:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221840.956:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221841.073:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221841.958:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221842.089:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221842.964:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221843.108:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221843.973:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221844.114:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221844.989:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221845.123:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221845.991:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221846.125:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221847.005:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221847.130:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221848.022:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221848.139:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221849.039:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221849.142:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221850.056:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221850.155:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221851.064:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221851.158:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221852.073:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221853.081:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221854.089:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221855.104:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221856.106:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221857.108:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221858.122:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221859.127:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221900.139:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221901.157:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221902.173:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221903.189:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221904.193:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221905.205:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\r\n[2724:5956:1103/221906.206:ERROR:chrome\\updater\\ipc\\update_service_dialer_win.cc:77] Failed to open named pipe server process 14804: Access is denied. (0x5)\nWindows browser startup may have relaunched before connecting to the DevTools pipe. Retry from a non-elevated PowerShell opened normally, outside an elevated or compatibility-mode parent. Archify does not disable browser de-elevation or the sandbox to preserve pipe handles.\nChrome transport: Node v26.12.1, libuv 1.52.1, win32; pid=2724, exitCode=null, signalCode=null.\nChrome read pipe: readable=true, ended=false, destroyed=false, receivedBytes=0, messages=0, bufferedBytes=0.\nChrome write pipe: writable=true, ended=false, destroyed=false, completedWrites=1, writtenBytes=50, bufferedBytes=0."
+      },
+      "supportedFixes": [
+        "do not edit or simplify the artifact because this is a browser-startup failure",
+        "retry browser-check once after host load subsides; if it repeats, stop and report the environment failure"
+      ]
+    }
+  ],
+  "evidence": {
+    "receipt": "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\review-2\\job-apply-flow.finalize.json",
+    "summaryReceipt": "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\review-2\\job-apply-flow.finalize-summary.json",
+    "browserCheckReceipt": "C:\\Users\\ankitkumar16\\Downloads\\agentic-ai\\.archify\\workflow-job-apply-flow-20261103-164500\\review-2\\job-apply-flow.browser-check.json"
+  },
+  "visualReview": "not-requested",
+  "failedStage": "browser-check",
+  "finishedAt": "2026-11-03T16:49:17.377Z",
+  "durationMs": 94231,
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-11-03T11:11:40.824Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  }
+}
