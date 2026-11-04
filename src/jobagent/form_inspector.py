@@ -25,8 +25,8 @@ def normalize_field_prompt(field: FormField) -> str:
     if not candidate:
         candidate = field.name.replace("_", " ").replace("-", " ").strip()
 
-    # Strip required asterisks, trailing punctuation, and extra whitespace
-    cleaned = re.sub(r"[\*:\s]+$", "", candidate).strip()
+    # Strip required asterisks (ASCII and Unicode ✱/★/•), trailing punctuation, and extra whitespace/newlines
+    cleaned = re.sub(r"[\*:\s✱★•\n\r]+$", "", candidate).strip()
     return cleaned
 
 

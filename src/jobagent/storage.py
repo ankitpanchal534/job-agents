@@ -427,6 +427,27 @@ class Storage:
             conn.execute("UPDATE answers SET status = 'rejected', updated_at = ? WHERE id = ?", (self._now(), answer_id))
             return self._fetch_answer(conn, answer_id)
 
+    def add_approved_answer(self, question: str, answer: str, job_id: Optional[int] = None) -> Answer:
+        key = normalize_question(question)
+        now = self._now()
+        with closing(self._connect()) as conn, conn:
+            existing = conn.execute(
+                f"SELECT {_ANSWER_COLUMNS} FROM answers WHERE question_key = ?",
+                (key,),
+            ).fetchone()
+            if existing:
+                conn.execute(
+                    "UPDATE answers SET answer = ?, source = 'human', status = 'approved', updated_at = ? WHERE id = ?",
+                    (answer, now, existing["id"]),
+                )
+                return self._fetch_answer(conn, existing["id"])
+            cursor = conn.execute(
+                "INSERT INTO answers (job_id, question, question_key, answer, source, status, created_at, updated_at)"
+                " VALUES (?, ?, ?, ?, 'human', 'approved', ?, ?)",
+                (job_id, question, key, answer, now, now),
+            )
+            return self._fetch_answer(conn, cursor.lastrowid)
+
     def approved_answers(self) -> list[tuple[str, str]]:
         with closing(self._connect()) as conn:
             rows = conn.execute("SELECT question, answer FROM answers WHERE status = 'approved' ORDER BY id").fetchall()

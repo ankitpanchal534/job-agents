@@ -5,6 +5,7 @@ from typing import Annotated, Literal, Optional, Union
 
 from pydantic import Field, StringConstraints
 
+import yaml
 from jobagent.config import ROOT, StrictModel, read_yaml
 
 DEFAULT_PROFILE_DIR = ROOT / "profile"
@@ -110,3 +111,70 @@ def profile_warnings(profile: Profile) -> list[str]:
     if not profile.experience.roles:
         warnings.append("experience.yaml has no roles: answers cannot be drafted from your history.")
     return warnings
+
+
+def save_learned_answer(
+    answers_file: Path,
+    question: str,
+    answer: str,
+    tags: Optional[list[str]] = None,
+) -> bool:
+    """Appends or updates a learned FAQ answer in profile/answers.yaml cleanly."""
+    answers_file = Path(answers_file)
+    if not answers_file.exists():
+        return False
+
+    q_clean = question.strip()
+    a_clean = answer.strip()
+    if not q_clean or not a_clean:
+        return False
+
+    content = answers_file.read_text(encoding="utf-8")
+    try:
+        data = yaml.safe_load(content) or {}
+    except Exception:
+        data = {}
+
+    faq_list = data.get("faq", [])
+    from jobagent.text import normalize_question
+
+    norm_q = normalize_question(q_clean)
+    for item in faq_list:
+        if isinstance(item, dict) and normalize_question(str(item.get("question", ""))) == norm_q:
+            return True
+
+    tag_list = list(tags) if tags else ["learned"]
+    q_lower = q_clean.lower()
+    if any(k in q_lower for k in ("compensation", "salary", "ctc", "pay")):
+        if "compensation" not in tag_list:
+            tag_list.append("compensation")
+    elif any(k in q_lower for k in ("notice", "joining", "available")):
+        if "notice" not in tag_list:
+            tag_list.append("notice")
+    elif any(k in q_lower for k in ("relocate", "relocation", "location", "city")):
+        if "location" not in tag_list:
+            tag_list.append("location")
+
+    q_escaped = q_clean.replace('"', '\\"')
+    a_escaped = a_clean.replace('"', '\\"')
+    tag_str = ", ".join(tag_list)
+    entry = f'\n  - question: "{q_escaped}"\n    answer: "{a_escaped}"\n    tags: [{tag_str}]\n'
+
+    # If file has `faq: []`, replace with `faq:` so items can follow
+    import re
+    cleaned_content = re.sub(r"faq:\s*\[\s*\]", "faq:", content)
+
+    if "faq:" in cleaned_content:
+        new_content = cleaned_content.rstrip() + entry
+    else:
+        new_content = cleaned_content.rstrip() + f"\nfaq:{entry}"
+
+    try:
+        parsed = yaml.safe_load(new_content)
+        Answers.model_validate(parsed)
+    except Exception:
+        return False
+
+    answers_file.write_text(new_content, encoding="utf-8")
+    return True
+

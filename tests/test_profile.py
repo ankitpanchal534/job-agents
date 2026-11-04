@@ -101,3 +101,22 @@ def test_missing_profile_file_is_reported_by_name(profile_dir):
     (profile_dir / "skills.yaml").unlink()
     with pytest.raises(FileNotFoundError, match="skills.yaml"):
         load_profile(profile_dir)
+
+
+def test_save_learned_answer(profile_dir):
+    from jobagent.profile import save_learned_answer
+    answers_file = profile_dir / "answers.yaml"
+
+    # Save a new compensation question
+    ok = save_learned_answer(answers_file, "Current Compensation (Yearly)", "15,00,000 INR")
+    assert ok is True
+
+    # Reload profile to verify it validates strictly
+    prof = load_profile(profile_dir)
+    faq_questions = [item.question for item in prof.answers.faq]
+    assert "Current Compensation (Yearly)" in faq_questions
+
+    # Verify duplicate call succeeds idempotently
+    ok2 = save_learned_answer(answers_file, "Current Compensation (Yearly)", "15,00,000 INR")
+    assert ok2 is True
+

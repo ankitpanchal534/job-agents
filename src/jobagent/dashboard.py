@@ -23,7 +23,7 @@ from jobagent.fetch import fetch_jd_text
 from jobagent.llm import ChatClient
 from jobagent.matcher import Matcher, match_job
 from jobagent.notify import Notifier, build_channels
-from jobagent.profile import DEFAULT_PROFILE_DIR, load_profile, profile_warnings
+from jobagent.profile import DEFAULT_PROFILE_DIR, load_profile, profile_warnings, save_learned_answer
 from jobagent.resolver import Resolver
 from jobagent.storage import Answer, Block, Job, JourneyStep, Storage
 
@@ -427,7 +427,9 @@ def main() -> None:
                 if st.button("Save & Approve", key=f"save_{item.id}", type="primary"):
                     if ans_text.strip():
                         storage.approve_answer(item.id, final_answer=ans_text.strip())
-                        st.success("Answer saved to curated bank!")
+                        save_learned_answer(Path("profile/answers.yaml"), item.question, ans_text.strip())
+                        st.success("Answer saved to curated bank and profile/answers.yaml!")
+                        time.sleep(0.5)
                         st.rerun()
                     else:
                         st.error("Please enter an answer before saving.")
@@ -440,6 +442,7 @@ def main() -> None:
                 c_app, c_rej = st.columns(2)
                 if c_app.button("Approve Draft", key=f"app_{item.id}", type="primary"):
                     storage.approve_answer(item.id, final_answer=edit_text.strip())
+                    save_learned_answer(Path("profile/answers.yaml"), item.question, edit_text.strip())
                     st.rerun()
                 if c_rej.button("Reject Draft", key=f"rej_{item.id}"):
                     storage.reject_answer(item.id)

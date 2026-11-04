@@ -10,11 +10,17 @@ from typing import Callable, Optional
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError, sync_playwright
 
 from jobagent.browser_hands import BrowserHands
-from jobagent.form_inspector import extract_form_fields, find_best_select_option, normalize_field_prompt
+from jobagent.form_inspector import (
+    FormField,
+    extract_form_fields,
+    find_best_select_option,
+    normalize_field_prompt,
+)
 from jobagent.notify import Notification, Notifier
-from jobagent.profile import DEFAULT_PROFILE_DIR
+from jobagent.profile import DEFAULT_PROFILE_DIR, save_learned_answer
 from jobagent.resolver import Resolver
 from jobagent.storage import Block, Storage
+from jobagent.text import normalize_question
 
 
 @dataclass(frozen=True)
@@ -77,8 +83,221 @@ class Applicant:
         except Exception:
             return ""
 
+    def _read_element_value(self, page, field: FormField) -> Optional[str]:
+        """Reads current value entered into an element on the active page."""
+        try:
+            if field.input_type == "radio":
+                checked = page.locator(f"input[type='radio'][name='{field.name}']:checked").first
+                if checked.count() > 0:
+                    val = checked.get_attribute("value") or ""
+                    if not val or val.lower() in ("on", "true"):
+                        lbl_el = checked.locator("xpath=ancestor::label[1]")
+                        val = (lbl_el.inner_text() if lbl_el.count() > 0 else "").strip()
+                    return val.strip() if val.strip() else None
+                return None
+
+            if field.tag == "select":
+                sel_loc = page.locator(field.selector).first
+                if sel_loc.count() > 0:
+                    val = sel_loc.evaluate("""el => {
+                        const opt = el.options[el.selectedIndex];
+                        return opt ? (opt.text || opt.value) : '';
+                    }""")
+                    if val and not val.strip().lower().startswith("select") and not val.strip().lower().startswith("choose"):
+                        return val.strip()
+                return None
+
+            if field.input_type in ("text", "number", "email", "tel") or field.tag == "textarea":
+                loc = page.locator(field.selector).first
+                if loc.count() > 0:
+                    val = loc.input_value()
+                    return val.strip() if val and val.strip() else None
+                return None
+        except Exception:
+            return None
+        return None
+
+    def _save_learned(self, prompt: str, user_val: str, job_id: Optional[int] = None) -> None:
+        """Saves a learned human answer into answers.yaml, SQLite answers bank, and in-memory resolver."""
+        if not user_val or user_val == "resumed":
+            return
+        answers_file = self._profile_dir / "answers.yaml"
+        saved = save_learned_answer(answers_file, prompt, user_val)
+        if saved:
+            self._log(f"✓ Saved '{prompt}': '{user_val}' to profile/answers.yaml for future use.")
+
+        self._storage.add_approved_answer(
+            question=prompt,
+            answer=user_val,
+            job_id=job_id,
+        )
+
+        if hasattr(self._resolver, "_extra_bank") and isinstance(self._resolver._extra_bank, dict):
+            self._resolver._extra_bank[normalize_question(prompt)] = user_val
+
+    def _fill_field_with_value(self, page, field: FormField, val: str, prompt: str) -> None:
+        """Fills an element with a specified value using Agent Hands."""
+        if field.input_type == "radio":
+            opt = find_best_select_option(field.options, val) or val
+            r_loc = page.locator(f"input[type='radio'][name='{field.name}'][value='{opt}']").first
+            target_loc = r_loc if r_loc.count() > 0 else page.locator(f"label:has-text('{opt}')").first
+            self._hands.click_element(page, target_loc, label=f"Select: {opt}")
+        elif field.tag == "select":
+            opt = find_best_select_option(field.options, val) or val
+            page.locator(field.selector).first.select_option(label=opt)
+        else:
+            loc = page.locator(field.selector).first
+            self._hands.type_into_element(page, loc, val, label=f"Typing {prompt[:12]}...")
+
+    def _wait_for_question_resolution(
+        self,
+        page,
+        job_id: int,
+        field: FormField,
+        prompt: str,
+        timeout_seconds: int = 600,
+    ) -> Optional[str]:
+        """Keeps Chrome open and active, highlighting the field and waiting for human input."""
+        screenshot = self._capture_screenshot(page, job_id, "question")
+        detail = f"Blocked on required question needing input: {prompt}"
+        self._log(f"BLOCKED: {detail}")
+
+        page_url = page.url if hasattr(page, "url") else None
+        block = self._storage.block_job(
+            job_id=job_id,
+            reason="unknown_question",
+            detail=detail,
+            page_url=page_url,
+            screenshot_path=screenshot,
+        )
+        self._storage.add_journey_step(
+            job_id=job_id,
+            step="block_detected",
+            agent="BrowserApplicant",
+            status="blocked",
+            summary=f"Waiting for human input in Chrome for '{prompt}'",
+            details={"question": prompt, "screenshot": screenshot, "reason": "unknown_question"},
+        )
+        if self._notifier:
+            self._notifier.notify_block(block)
+        self._status("waiting_for_user", f"Waiting for human to answer '{prompt}' in Chrome...")
+
+        # Visually highlight the field in Chrome with a pulsating blue outline and focus it
+        try:
+            page.evaluate(
+                """(sel) => {
+                    const el = document.querySelector(sel);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        el.style.outline = '3px solid #2563eb';
+                        el.style.boxShadow = '0 0 12px rgba(37, 99, 235, 0.6)';
+                        el.focus();
+                    }
+                }""",
+                field.selector,
+            )
+        except Exception:
+            pass
+
+        self._hands.set_label(page, f"Please fill: {prompt[:20]}...")
+        self._log(
+            f"⏳ AGENT WAITING: Please enter '{prompt}' directly in the open Chrome window.\n"
+            f"The agent is actively watching and will automatically resume once answered."
+        )
+
+        start_time = time.time()
+        last_val = ""
+        last_change_time = time.time()
+
+        while time.time() - start_time < timeout_seconds:
+            if page.is_closed():
+                self._log("Browser was closed by user.")
+                return None
+
+            # 1. Check if human answered directly in Chrome
+            current_val = self._read_element_value(page, field)
+            if current_val:
+                if current_val != last_val:
+                    last_val = current_val
+                    last_change_time = time.time()
+                else:
+                    # Check if value is stable (user finished typing or blurred field)
+                    is_focused = False
+                    try:
+                        is_focused = page.evaluate("(sel) => document.activeElement === document.querySelector(sel)", field.selector)
+                    except Exception:
+                        pass
+
+                    time_stable = time.time() - last_change_time
+                    if (not is_focused and time_stable >= 0.8) or time_stable >= 1.8:
+                        self._on_question_resolved(page, job_id, block, field, prompt, current_val)
+                        return current_val
+
+            # 2. Check if user answered via Dashboard / CLI
+            if self._storage.is_block_resolved(block.id):
+                approved = dict(self._storage.approved_answers())
+                val = approved.get(prompt)
+                if not val:
+                    for q, a in approved.items():
+                        if normalize_question(q) == normalize_question(prompt):
+                            val = a
+                            break
+                if val:
+                    self._fill_field_with_value(page, field, val, prompt)
+                    self._on_question_resolved(page, job_id, block, field, prompt, val)
+                    return val
+                else:
+                    final_val = self._read_element_value(page, field) or "resumed"
+                    self._on_question_resolved(page, job_id, block, field, prompt, final_val)
+                    return final_val
+
+            page.wait_for_timeout(500)
+
+        self._log(f"Timed out after {timeout_seconds}s waiting for '{prompt}'.")
+        return None
+
+    def _on_question_resolved(
+        self,
+        page,
+        job_id: int,
+        block: Block,
+        field: FormField,
+        prompt: str,
+        user_val: str,
+    ) -> None:
+        """Handles post-resolution cleanup, profile saving, and status resumption."""
+        try:
+            page.evaluate(
+                """(sel) => {
+                    const el = document.querySelector(sel);
+                    if (el) {
+                        el.style.outline = '';
+                        el.style.boxShadow = '';
+                    }
+                }""",
+                field.selector,
+            )
+        except Exception:
+            pass
+        self._hands.set_label(page, "")
+
+        self._save_learned(prompt, user_val, job_id=job_id)
+
+        if not self._storage.is_block_resolved(block.id):
+            self._storage.resume_job(job_id)
+
+        self._storage.add_journey_step(
+            job_id=job_id,
+            step="field_input",
+            agent="BrowserApplicant",
+            status="success",
+            summary=f"Human resolved '{prompt}': '{user_val}'. Saved to FAQ document.",
+            details={"field": prompt, "value": user_val, "saved_to_profile": True},
+        )
+        self._log(f"✓ Resuming application flow...")
+
     def _wait_for_block_resolution(self, page, job_id: int, block: Block, timeout_seconds: int = 600) -> bool:
-        """Waits in-place with the browser open for the user to resolve a block either in the browser or via dashboard."""
+        """Waits in-place with the browser open for the user to resolve a generic block (e.g. CAPTCHA, unsupported portal)."""
         self._log(
             f"⏳ AGENT BLOCKED: {block.detail}\n"
             f"Keeping Chrome open. Please resolve the issue in browser or click 'Resume' in Dashboard..."
@@ -279,6 +498,21 @@ class Applicant:
                         continue
 
                     try:
+                        # First: Check if the user already filled this field directly into Chrome!
+                        existing_val = self._read_element_value(page, field)
+                        if existing_val:
+                            self._log(f"Field '{field.label or prompt}' already filled: {existing_val[:30]}")
+                            self._save_learned(prompt, existing_val, job_id=job_id)
+                            self._storage.add_journey_step(
+                                job_id=job_id,
+                                step="field_input",
+                                agent="BrowserApplicant",
+                                status="success",
+                                summary=f"User already filled '{field.label or prompt}': '{existing_val}'",
+                                details={"field": prompt, "value": existing_val, "type": field.input_type},
+                            )
+                            continue
+
                         # 1. File upload (Resume)
                         if field.input_type == "file":
                             resume_path = self._find_resume_pdf()
@@ -353,7 +587,11 @@ class Applicant:
                                     details={"field": prompt, "value": chosen_opt, "type": "radio"},
                                 )
                             elif field.is_required and (res.blocked_reason or (res.needs_review and not res.answer)):
-                                return self._handle_blocked_question(page, job_id, prompt, should_wait)
+                                if not should_wait or self._headless:
+                                    return self._handle_blocked_question(page, job_id, prompt, should_wait=False)
+                                resolved_val = self._wait_for_question_resolution(page, job_id, field, prompt)
+                                if resolved_val is None:
+                                    return ApplicantOutcome(status="blocked", detail=f"Blocked on required question: {prompt}", job_id=job_id)
                             continue
 
                         # 3. Checkbox
@@ -391,7 +629,11 @@ class Applicant:
                                         details={"field": prompt, "value": opt, "type": "select"},
                                     )
                             elif field.is_required and (res.blocked_reason or (res.needs_review and not res.answer)):
-                                return self._handle_blocked_question(page, job_id, prompt, should_wait)
+                                if not should_wait or self._headless:
+                                    return self._handle_blocked_question(page, job_id, prompt, should_wait=False)
+                                resolved_val = self._wait_for_question_resolution(page, job_id, field, prompt)
+                                if resolved_val is None:
+                                    return ApplicantOutcome(status="blocked", detail=f"Blocked on required question: {prompt}", job_id=job_id)
                             continue
 
                         # 5. Text, Email, Tel, Textarea
@@ -410,7 +652,11 @@ class Applicant:
                                 details={"field": prompt, "value": res.answer[:50], "source": res.source, "type": field.input_type},
                             )
                         elif field.is_required and (res.blocked_reason or (res.needs_review and not res.answer)):
-                            return self._handle_blocked_question(page, job_id, prompt, should_wait)
+                            if not should_wait or self._headless:
+                                return self._handle_blocked_question(page, job_id, prompt, should_wait=False)
+                            resolved_val = self._wait_for_question_resolution(page, job_id, field, prompt)
+                            if resolved_val is None:
+                                return ApplicantOutcome(status="blocked", detail=f"Blocked on required question: {prompt}", job_id=job_id)
 
                     except Exception as field_err:
                         self._log(f"Warning: Could not fill field '{prompt}': {field_err}")
@@ -513,11 +759,12 @@ class Applicant:
         screenshot = self._capture_screenshot(page, job_id, "question")
         detail = f"Blocked on required question needing input: {prompt}"
         self._log(f"BLOCKED: {detail}")
+        page_url = page.url if hasattr(page, "url") else None
         block = self._storage.block_job(
             job_id=job_id,
             reason="unknown_question",
             detail=detail,
-            page_url=page.url,
+            page_url=page_url,
             screenshot_path=screenshot,
         )
         self._storage.add_journey_step(

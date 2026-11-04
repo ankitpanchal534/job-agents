@@ -136,3 +136,93 @@ def test_applicant_wait_for_block_resolution(mock_server, tmp_path):
     journey = storage.list_journey_steps(job.id)
     assert any(s.step == "block_resolved" for s in journey)
 
+
+def test_applicant_watches_and_learns_question(tmp_path):
+    from jobagent.form_inspector import FormField
+
+    db_file = tmp_path / "test_jobs.db"
+    storage = Storage(str(db_file))
+    job = storage.add_job("https://example.com/job1")
+
+    profile_dir = tmp_path / "profile"
+    profile_dir.mkdir(parents=True)
+    answers_file = profile_dir / "answers.yaml"
+    answers_file.write_text("faq: []\n", encoding="utf-8")
+
+    applicant = Applicant(
+        storage=storage,
+        resolver=FakeResolver(),
+        headless=True,
+        profile_dir=profile_dir,
+        hands=BrowserHands(enabled=False),
+        wait_for_human=True,
+    )
+
+    field = FormField(
+        name="salary",
+        tag="input",
+        input_type="text",
+        label="Current Compensation (Yearly)\n✱",
+        selector="#salary",
+    )
+
+    class MockFieldPage:
+        def __init__(self):
+            self.value = ""
+            self.closed = False
+            self.url = "https://example.com/job1"
+        def is_closed(self):
+            return self.closed
+        def wait_for_timeout(self, ms):
+            import time
+            time.sleep(ms / 1000.0)
+        def evaluate(self, script, *args):
+            return False
+        def locator(self, sel):
+            class Loc:
+                def __init__(self, page):
+                    self.page = page
+                def count(self):
+                    return 1
+                def input_value(self):
+                    return self.page.value
+                @property
+                def first(self):
+                    return self
+            return Loc(self)
+
+    page = MockFieldPage()
+
+    def human_types():
+        import time
+        time.sleep(0.2)
+        page.value = "15,00,000 INR"
+
+    t = threading.Thread(target=human_types)
+    t.start()
+
+    res = applicant._wait_for_question_resolution(
+        page=page,
+        job_id=job.id,
+        field=field,
+        prompt="Current Compensation (Yearly)",
+        timeout_seconds=4,
+    )
+    t.join()
+
+    assert res == "15,00,000 INR"
+
+    # Verify saved into answers.yaml
+    content = answers_file.read_text(encoding="utf-8")
+    assert "Current Compensation (Yearly)" in content
+    assert "15,00,000 INR" in content
+
+    # Verify saved into SQLite answers
+    approved = dict(storage.approved_answers())
+    assert approved.get("Current Compensation (Yearly)") == "15,00,000 INR"
+
+    # Verify journey step
+    journey = storage.list_journey_steps(job.id)
+    assert any("Human resolved" in s.summary for s in journey)
+
+

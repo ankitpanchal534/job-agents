@@ -21,18 +21,16 @@ The foundation plan (P0 to P5) is built. The detailed, ordered list is in `HANDO
 
 ## Where I stopped
 
-Application Journey Audit, Virtual Hands ("Agent Hands"), Live Block Waiting, and Real-Time Multi-Agent UI completed:
-1. Complete Journey Audit Storage (`src/jobagent/storage.py`):
-   - Added `journey_steps` table with schema `(id, job_id, step, agent, status, summary, details, created_at)` and index `idx_journey_job`.
-   - Added `JourneyStep` dataclass, `_journey_step` parser, `add_journey_step()`, `list_journey_steps()`, and `is_block_resolved()` methods.
-2. Virtual Mouse & Keyboard Engine ("Agent Hands") (`src/jobagent/browser_hands.py`):
-   - `inject_cursor`: Injects custom neon cursor (`#jobagent-cursor`) with SVG arrow and dynamic action badge into active Playwright pages.
-   - Smooth curved movement: Computes quadratic Bézier trajectories with human-like perpendicular deviation and moves Playwright mouse coordinates with visual updates.
-   - Realistic typing: Injects human micro-delays (25-55ms with word-boundary hesitations) and visual click ripples.
-3. Live Block Waiting & Human Resolution (`src/jobagent/applicant.py`):
-   - Added `wait_for_human: bool = True` (configurable via toggle or `--no-wait` flag).
-   - In-place polling loop: When blocked (CAPTCHA, missing input, unsupported portal), keeps Chrome window open and continuously polls `storage.is_block_resolved` or live CAPTCHA clearance.
-   - When resolved in browser or dashboard, resumes immediately within the exact same browser window.
+Live In-Page Human Watching & Automatic Answer Learning completed:
+- `src/jobagent/form_inspector.py`: updated `normalize_field_prompt` to strip Unicode heavy asterisks (`✱`, `★`, `•`), newlines, colons, and trailing whitespace so Lever/Greenhouse labels like `Current Compensation (Yearly)\n✱` clean cleanly.
+- `src/jobagent/profile.py`: added `save_learned_answer(answers_file, question, answer, tags)` which safely appends learned FAQ entries to `profile/answers.yaml` and verifies Pydantic strict model validation.
+- `src/jobagent/storage.py`: added `add_approved_answer(question, answer, job_id)` to store and update approved human answers directly in SQLite.
+- `src/jobagent/applicant.py`:
+  - Active in-page watch loop (`_wait_for_question_resolution`): keeps Chrome open, highlights blocked fields in blue/red, focuses them, and actively polls the element for human input or dashboard resolution.
+  - Non-breaking flow: when the human fills the answer in Chrome, it detects the stable input, saves it to `profile/answers.yaml` and SQLite, records the journey step, and automatically continues to the remaining form fields without closing Chrome or breaking the flow.
+  - Pre-fill recognition: checks if fields were already answered by the user before waiting, avoiding redundant blocks.
+- `src/jobagent/dashboard.py`: saving/approving questions in Tab 3 also persists to `profile/answers.yaml`.
+- All 259 tests passing (`uv run pytest` in 32s) and `check-config` verified clean.
    - Records full chronological journey steps across Extractor, Matcher, Resolver, and Applicant.
 4. Multi-Agent Real-Time UI & Journey Timeline (`src/jobagent/dashboard.py`):
    - Real-time status cards for Extractor Agent, Matcher Agent, Resolver Agent, and Browser Applicant.

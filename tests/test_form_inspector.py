@@ -30,6 +30,15 @@ def test_normalize_field_prompt_prioritizes_label():
     prompt = normalize_field_prompt(field)
     assert prompt == "Email Address"
 
+    # Lever style with unicode heavy asterisk and newline
+    field_lever = FormField(
+        name="cards[field0]",
+        tag="input",
+        input_type="text",
+        label="Current Compensation (Yearly)\n✱",
+    )
+    assert normalize_field_prompt(field_lever) == "Current Compensation (Yearly)"
+
 
 def test_normalize_field_prompt_falls_back_to_placeholder_or_name():
     field_placeholder = FormField(
