@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import pytest
-from jobagent.form_inspector import FormField, normalize_field_prompt, find_best_select_option
+from jobagent.form_inspector import FormField, normalize_field_prompt, find_best_select_option, extract_form_fields
+from playwright.sync_api import sync_playwright
 
 
 def test_form_field_creation():
@@ -68,4 +69,39 @@ def test_find_best_select_option():
     assert find_best_select_option(options, "yes") == "Yes"
     # No match returns None
     assert find_best_select_option(options, "Maybe") is None
+
+
+def test_extract_form_fields_filters_ghost_and_hidden_elements():
+    html = """
+    <!DOCTYPE html>
+    <html>
+    <body>
+      <form>
+        <label for='fname'>First Name</label>
+        <input id='fname' type='text' required>
+
+        <!-- React-Select with dummy validation input -->
+        <div id='country-label'>Country*</div>
+        <input id='country' type='text' aria-labelledby='country-label' role='combobox'>
+        <input required tabindex='-1' aria-hidden='true' class='dummy-react-select'>
+
+        <!-- Hidden dummy element without any label/id/name -->
+        <input type='text' style='display:none'>
+
+        <!-- Normal phone -->
+        <input id='phone' type='tel' aria-label='Phone Number'>
+      </form>
+    </body>
+    </html>
+    """
+    with sync_playwright() as p:
+        b = p.chromium.launch(channel="chrome", headless=True)
+        page = b.new_page()
+        page.set_content(html)
+        fields = extract_form_fields(page)
+        assert len(fields) == 3
+        assert normalize_field_prompt(fields[0]) == "First Name"
+        assert normalize_field_prompt(fields[1]) == "Country"
+        assert normalize_field_prompt(fields[2]) == "Phone Number"
+        b.close()
 

@@ -21,6 +21,19 @@ The foundation plan (P0 to P5) is built. The detailed, ordered list is in `HANDO
 
 ## Where I stopped
 
+Ghost Field Filtering, Visual Verification & Automated "jobagent" Profile Provisioning:
+- `src/jobagent/form_inspector.py`:
+  - Filtered out non-interactive internal framework validation inputs (e.g. React-Select `tabindex="-1"`, `aria-hidden="true"` dummy inputs that triggered phantom `field 5` and `field 9` blocks).
+  - Added visual bounding box checks (`rect["width"] > 1`, `rect["height"] > 1`, computed display/visibility) to ensure only visibly rendered interactive fields are analyzed.
+  - Implemented `aria-labelledby` resolution, correctly mapping Greenhouse custom selects like `#country` to `"Country"` and `#candidate-location` to `"Location (City)"`.
+  - Discarded anonymous ghost controls lacking any identity (no id, name, label, placeholder, or aria-label).
+- `src/jobagent/browser_hands.py`:
+  - Added bounded 3000ms timeouts on `scroll_into_view_if_needed`, `bounding_box`, and `locator.fill/click` to prevent 30-second Playwright hangs on dynamically moving/detached DOM elements.
+- `src/jobagent/applicant.py`:
+  - Implemented `get_or_create_chrome_profile(user_data_dir, profile_name="jobagent")`: automatically provisions and initializes the `jobagent` profile folder, `Local State`, and `Preferences` if it does not exist, guaranteeing Chrome opens directly into the dedicated `"jobagent"` profile.
+- `tests/test_form_inspector.py`: added `test_extract_form_fields_filters_ghost_and_hidden_elements`.
+- All 266 tests passing (`uv run pytest`) and `check-config` clean.
+
 Named "jobagent" Chrome Profile Integration:
 - `src/jobagent/applicant.py`: added `profile_directory="jobagent"` parameter to `Applicant` and injected `--profile-directory=jobagent` into Chrome launch args, ensuring Chrome creates and attaches directly to the dedicated "jobagent" profile.
 - `src/jobagent/cli.py`: updated `_chrome` and `_apply` commands to support `--profile-directory` (defaulting to `"jobagent"`).

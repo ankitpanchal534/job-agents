@@ -30,6 +30,65 @@ class ApplicantOutcome:
     job_id: int
 
 
+def get_or_create_chrome_profile(
+    user_data_dir: Optional[str | Path] = None,
+    profile_name: str = "jobagent",
+) -> tuple[Path, str]:
+    """Ensures a dedicated Chrome profile named `profile_name` exists and is initialized."""
+    import json
+    import platform
+
+    if not user_data_dir:
+        system = platform.system()
+        if system == "Darwin":
+            user_data_dir = Path.home() / "Library" / "Application Support" / "JobAgent" / "Chrome"
+        elif system == "Windows":
+            user_data_dir = Path.home() / "AppData" / "Local" / "JobAgent" / "Chrome"
+        else:
+            user_data_dir = Path.home() / ".config" / "jobagent" / "chrome"
+    else:
+        user_data_dir = Path(user_data_dir).expanduser().resolve()
+
+    user_data_dir.mkdir(parents=True, exist_ok=True)
+    named_profile = user_data_dir / profile_name
+    named_profile.mkdir(parents=True, exist_ok=True)
+
+    # Initialize Local State if not present or missing profile
+    local_state_file = user_data_dir / "Local State"
+    local_state = {}
+    if local_state_file.exists():
+        try:
+            local_state = json.loads(local_state_file.read_text(encoding="utf-8"))
+        except Exception:
+            local_state = {}
+
+    local_state.setdefault("profile", {}).setdefault("info_cache", {})[profile_name] = {
+        "name": profile_name,
+        "is_using_default_name": False,
+        "active_time": time.time(),
+    }
+    try:
+        local_state_file.write_text(json.dumps(local_state, indent=2), encoding="utf-8")
+    except Exception:
+        pass
+
+    # Initialize Preferences inside the profile folder
+    pref_file = named_profile / "Preferences"
+    pref = {}
+    if pref_file.exists():
+        try:
+            pref = json.loads(pref_file.read_text(encoding="utf-8"))
+        except Exception:
+            pref = {}
+    pref.setdefault("profile", {})["name"] = profile_name
+    try:
+        pref_file.write_text(json.dumps(pref, indent=2), encoding="utf-8")
+    except Exception:
+        pass
+
+    return user_data_dir, profile_name
+
+
 class Applicant:
     def __init__(
         self,
@@ -427,26 +486,29 @@ class Applicant:
                         raise
 
             if not is_cdp:
-                extra_args = []
-                if not self._headless:
-                    extra_args.append("--start-maximized")
-                if self._profile_directory:
-                    extra_args.append(f"--profile-directory={self._profile_directory}")
+                if not self._headless or self._user_data_dir:
+                    pdir, pname = get_or_create_chrome_profile(
+                        user_data_dir=self._user_data_dir,
+                        profile_name=self._profile_directory or "jobagent",
+                    )
+                    extra_args = []
+                    if not self._headless:
+                        extra_args.append("--start-maximized")
+                    extra_args.append(f"--profile-directory={pname}")
 
-                if self._user_data_dir:
-                    profile_path = Path(self._user_data_dir).resolve()
-                    profile_path.mkdir(parents=True, exist_ok=True)
                     launch_kwargs = {
-                        "user_data_dir": str(profile_path),
+                        "user_data_dir": str(pdir),
                         "channel": "chrome",
                         "headless": self._headless,
+                        "args": extra_args,
                     }
-                    if extra_args:
-                        launch_kwargs["args"] = extra_args
-                    self._log(f"Opening Chrome with persistent user profile '{self._profile_directory or 'Default'}' (storage: {profile_path.name})...")
+                    self._log(f"Opening Chrome with persistent user profile '{pname}' (storage: {pdir})...")
                     context = p.chromium.launch_persistent_context(**launch_kwargs)
                     page = context.pages[0] if context.pages else context.new_page()
                 else:
+                    extra_args = []
+                    if self._profile_directory:
+                        extra_args.append(f"--profile-directory={self._profile_directory}")
                     launch_kwargs = {"channel": "chrome", "headless": self._headless}
                     if extra_args:
                         launch_kwargs["args"] = extra_args
@@ -815,18 +877,16 @@ class Applicant:
                             browser.close()
                         except Exception:
                             pass
-                elif self._user_data_dir:
-                    if context:
-                        try:
-                            context.close()
-                        except Exception:
-                            pass
-                else:
-                    if browser:
-                        try:
-                            browser.close()
-                        except Exception:
-                            pass
+                elif context:
+                    try:
+                        context.close()
+                    except Exception:
+                        pass
+                elif browser:
+                    try:
+                        browser.close()
+                    except Exception:
+                        pass
 
     def _keep_browser_open_for_inspection(self, page, seconds: int = 30) -> None:
         if self._headless:

@@ -187,13 +187,16 @@ class BrowserHands:
     def click_element(self, page: Any, locator: Any, label: str = "Clicking...") -> None:
         """Smoothly moves cursor to element center, shows ripple animation, and clicks."""
         if not self.enabled:
-            locator.click()
+            try:
+                locator.click(timeout=3000)
+            except Exception:
+                locator.click(timeout=3000, force=True)
             return
 
         self.inject_cursor(page)
         try:
-            locator.scroll_into_view_if_needed()
-            box = locator.bounding_box()
+            locator.scroll_into_view_if_needed(timeout=3000)
+            box = locator.bounding_box(timeout=3000)
         except Exception:
             box = None
 
@@ -222,12 +225,12 @@ class BrowserHands:
             try:
                 page.mouse.click(target_x, target_y)
             except Exception:
-                locator.click(force=True)
+                locator.click(timeout=3000, force=True)
 
             time.sleep(0.06)
             self.set_label(page, "")
         else:
-            locator.click(force=True)
+            locator.click(timeout=3000, force=True)
 
     def type_into_element(
         self,
@@ -248,7 +251,7 @@ class BrowserHands:
 
         if clear_first:
             try:
-                locator.fill("")
+                locator.fill("", timeout=3000)
             except Exception:
                 pass
 

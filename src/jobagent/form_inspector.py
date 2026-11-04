@@ -55,34 +55,65 @@ def extract_form_fields(page) -> List[FormField]:
     fields: List[FormField] = []
     seen_radio_groups: set[str] = set()
 
-    # Locate all interactive form controls
-    elements = page.locator("input:not([type='hidden']):not([type='submit']):not([type='button']), textarea, select").all()
+    # Locate interactive form controls
+    elements = page.locator("input:not([type='hidden']):not([type='submit']):not([type='button']):not([type='reset']):not([type='image']), textarea, select").all()
 
     for idx, el in enumerate(elements):
         try:
             tag_name = el.evaluate("e => e.tagName.toLowerCase()")
             input_type = (el.get_attribute("type") or ("select" if tag_name == "select" else "text")).lower()
-            if not el.is_visible() and input_type != "file":
+
+            if input_type in ("hidden", "submit", "button", "reset", "image"):
                 continue
-            name = el.get_attribute("name") or el.get_attribute("id") or f"field_{idx}"
-            placeholder = el.get_attribute("placeholder") or ""
+
+            # Skip aria-hidden (framework validation dummies / internal nodes) unless file input
+            if el.get_attribute("aria-hidden") == "true" and input_type != "file":
+                continue
+
+            # Skip negative tabindex (non-tabbable hidden dummies) unless file input
+            tabindex = el.get_attribute("tabindex")
+            if tabindex == "-1" and input_type != "file":
+                continue
+
+            # Visual check: Bounding client rect & computed visibility
+            rect = el.evaluate("""e => {
+                const r = e.getBoundingClientRect();
+                const style = window.getComputedStyle(e);
+                return {
+                    width: r.width,
+                    height: r.height,
+                    display: style.display,
+                    visibility: style.visibility,
+                    opacity: style.opacity,
+                };
+            }""")
+            if input_type != "file":
+                if rect["display"] == "none" or rect["visibility"] == "hidden" or float(rect["opacity"] or 1) <= 0:
+                    continue
+                if rect["width"] <= 1 or rect["height"] <= 1:
+                    continue
+
+            name = el.get_attribute("name") or ""
+            placeholder = (el.get_attribute("placeholder") or "").strip()
             is_required = bool(
                 el.get_attribute("required") is not None
                 or el.get_attribute("aria-required") == "true"
                 or el.evaluate("e => e.required === true")
             )
-            elem_id = el.get_attribute("id")
+            elem_id = el.get_attribute("id") or ""
+            aria_label = (el.get_attribute("aria-label") or "").strip()
 
             # -------------------------------------------------------------
             # Special Handling for Radio Button Groups
             # -------------------------------------------------------------
             if input_type == "radio":
-                if name in seen_radio_groups:
+                radio_group_key = name or elem_id
+                if not radio_group_key or radio_group_key in seen_radio_groups:
                     continue
-                seen_radio_groups.add(name)
+                seen_radio_groups.add(radio_group_key)
 
                 # Extract all options in this radio group
-                group_elements = page.locator(f"input[type='radio'][name='{name}']").all()
+                group_elements = page.locator(f"input[type='radio'][name='{name}']").all() if name else [el]
                 radio_options: List[str] = []
                 for r in group_elements:
                     val = r.get_attribute("value") or ""
@@ -106,16 +137,16 @@ def extract_form_fields(page) -> List[FormField]:
                 }""").strip()
 
                 if not question_label:
-                    question_label = name.replace("_", " ").replace("-", " ")
+                    question_label = aria_label or name.replace("_", " ").replace("-", " ")
 
                 fields.append(
                     FormField(
-                        name=name,
+                        name=name or elem_id,
                         tag=tag_name,
                         input_type="radio",
                         label=question_label,
                         is_required=is_required,
-                        selector=f"input[type='radio'][name='{name}']",
+                        selector=f"input[type='radio'][name='{name}']" if name else f"#{elem_id}",
                         options=radio_options,
                     )
                 )
@@ -125,17 +156,29 @@ def extract_form_fields(page) -> List[FormField]:
             # Label Extraction for Other Controls (Text, Textarea, Select, File)
             # -------------------------------------------------------------
             label_text = ""
-            # 1. aria-label or aria-labelledby
-            aria_label = el.get_attribute("aria-label")
+
+            # 1. aria-label
             if aria_label:
                 label_text = aria_label
 
-            # 2. Check ancestor question container (e.g. Lever, Greenhouse)
+            # 2. aria-labelledby
+            if not label_text:
+                aria_labelledby = el.get_attribute("aria-labelledby")
+                if aria_labelledby:
+                    for lbl_id in aria_labelledby.split():
+                        target_lbl = page.locator(f"#{lbl_id}").first
+                        if target_lbl.count() > 0:
+                            txt = target_lbl.inner_text().strip()
+                            if txt:
+                                label_text = txt
+                                break
+
+            # 3. Check ancestor question container (e.g. Lever, Greenhouse)
             if not label_text or label_text.lower() in ("type your response", "text"):
                 container_label = el.evaluate("""e => {
-                    let cur = e.closest(".application-question, .custom-question, .form-group, fieldset");
+                    let cur = e.closest(".application-question, .custom-question, .form-group, fieldset, .field");
                     if (cur) {
-                        let lbl = cur.querySelector(".text, .application-label, legend, label");
+                        let lbl = cur.querySelector(".text, .application-label, legend, label, [class*='label']");
                         if (lbl && lbl.innerText.trim()) return lbl.innerText.trim();
                     }
                     return "";
@@ -143,19 +186,19 @@ def extract_form_fields(page) -> List[FormField]:
                 if container_label:
                     label_text = container_label
 
-            # 3. <label for="...">
+            # 4. <label for="...">
             if not label_text and elem_id:
                 labels = page.locator(f"label[for='{elem_id}']").all()
                 if labels:
-                    label_text = labels[0].inner_text()
+                    label_text = labels[0].inner_text().strip()
 
-            # 4. Wrapping <label>
+            # 5. Wrapping <label>
             if not label_text:
                 parent_label = el.locator("xpath=ancestor::label[1]")
                 if parent_label.count() > 0:
-                    label_text = parent_label.first.inner_text()
+                    label_text = parent_label.first.inner_text().strip()
 
-            # 5. Preceding sibling or nearby text
+            # 6. Preceding sibling or nearby text
             if not label_text:
                 label_text = el.evaluate("""e => {
                     let prev = e.previousElementSibling;
@@ -163,7 +206,11 @@ def extract_form_fields(page) -> List[FormField]:
                         return prev.innerText.trim();
                     }
                     return '';
-                }""")
+                }""").strip()
+
+            # Filter out anonymous elements with no label, placeholder, name, id, or aria-label
+            if not label_text and not placeholder and not name and not elem_id and not aria_label:
+                continue
 
             # For select, extract options
             options: List[str] = []
@@ -171,17 +218,27 @@ def extract_form_fields(page) -> List[FormField]:
                 opt_elements = el.locator("option").all()
                 options = [opt.inner_text().strip() for opt in opt_elements if opt.inner_text().strip()]
 
-            # Build selector
+            # Build reliable selector
             if elem_id:
                 selector = f"#{elem_id}"
-            elif el.get_attribute("name"):
-                selector = f"{tag_name}[name='{el.get_attribute('name')}']"
+            elif name:
+                selector = f"{tag_name}[name='{name}']"
+            elif aria_label:
+                selector = f"{tag_name}[aria-label='{aria_label}']"
+            elif placeholder:
+                selector = f"{tag_name}[placeholder='{placeholder}']"
             else:
-                selector = f"{tag_name}:nth-of-type({idx+1})"
+                selector = el.evaluate("""e => {
+                    if (e.id) return '#' + e.id;
+                    if (e.name) return e.tagName.toLowerCase() + \"[name='\" + e.name + \"']\";
+                    let parent = e.parentElement;
+                    if (parent && parent.id) return '#' + parent.id + ' ' + e.tagName.toLowerCase();
+                    return e.tagName.toLowerCase();
+                }""")
 
             fields.append(
                 FormField(
-                    name=name,
+                    name=name or elem_id or label_text or f"field_{idx}",
                     tag=tag_name,
                     input_type=input_type,
                     label=label_text.strip(),

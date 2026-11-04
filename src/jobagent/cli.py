@@ -326,37 +326,43 @@ def _resume(args) -> int:
 def _chrome(args) -> int:
     import platform
     import subprocess
+    from jobagent.applicant import get_or_create_chrome_profile
 
     system = platform.system()
     port = args.port or 9222
-    user_data_dir = args.user_data_dir
-    profile_dir = getattr(args, "profile_directory", "jobagent")
+    requested_profile = getattr(args, "profile_directory", "jobagent") or "jobagent"
+    user_data_dir, profile_dir = get_or_create_chrome_profile(
+        user_data_dir=args.user_data_dir,
+        profile_name=requested_profile,
+    )
 
     cmd = []
     if system == "Darwin":
-        cmd = ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", f"--remote-debugging-port={port}"]
-        if user_data_dir:
-            cmd.append(f"--user-data-dir={user_data_dir}")
-        if profile_dir:
-            cmd.append(f"--profile-directory={profile_dir}")
+        cmd = [
+            "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            f"--remote-debugging-port={port}",
+            f"--user-data-dir={user_data_dir}",
+            f"--profile-directory={profile_dir}",
+        ]
     elif system == "Windows":
-        cmd = ["chrome.exe", f"--remote-debugging-port={port}"]
-        if user_data_dir:
-            cmd.append(f"--user-data-dir={user_data_dir}")
-        if profile_dir:
-            cmd.append(f"--profile-directory={profile_dir}")
+        cmd = [
+            "chrome.exe",
+            f"--remote-debugging-port={port}",
+            f"--user-data-dir={user_data_dir}",
+            f"--profile-directory={profile_dir}",
+        ]
     else:
-        cmd = ["google-chrome", f"--remote-debugging-port={port}"]
-        if user_data_dir:
-            cmd.append(f"--user-data-dir={user_data_dir}")
-        if profile_dir:
-            cmd.append(f"--profile-directory={profile_dir}")
+        cmd = [
+            "google-chrome",
+            f"--remote-debugging-port={port}",
+            f"--user-data-dir={user_data_dir}",
+            f"--profile-directory={profile_dir}",
+        ]
 
     print(f"Launching Google Chrome with profile '{profile_dir}' and remote debugging on port {port}...")
     try:
         subprocess.Popen(cmd)
-        print(f"✓ Google Chrome launched on port {port} (profile: {profile_dir}).")
-        print("Note: To connect to your personal profile, quit Chrome completely (Cmd+Q) before running this command.")
+        print(f"✓ Google Chrome launched on port {port} (profile: {profile_dir}, storage: {user_data_dir}).")
         return 0
     except Exception as e:
         print(f"ERROR: Could not launch Chrome: {e}")
