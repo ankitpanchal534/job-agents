@@ -486,3 +486,15 @@ def test_batch_skips_tracked_links_unless_forced(tmp_path, capsys, monkeypatch):
 
     batch(tmp_path, make_llm(), BATCH_URLS, "--force")
     assert "2 apply" in capsys.readouterr().out
+
+
+def test_chrome_command_launches(monkeypatch, capsys):
+    from unittest.mock import MagicMock
+    mock_popen = MagicMock()
+    monkeypatch.setattr("subprocess.Popen", mock_popen)
+    code = main(["chrome", "--port", "9222"])
+    assert code == 0
+    assert "Google Chrome launched on port 9222" in capsys.readouterr().out
+    mock_popen.assert_called_once()
+    args_called = mock_popen.call_args[0][0]
+    assert any("--remote-debugging-port=9222" in a for a in args_called)

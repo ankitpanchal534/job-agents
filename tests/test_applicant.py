@@ -172,3 +172,64 @@ def test_applicant_blocks_on_sensitive_question(mock_server, tmp_path):
     blocks = storage.list_blocks()
     assert len(blocks) == 1
     assert blocks[0].reason == "unknown_question"
+
+
+def test_applicant_with_persistent_user_data_dir(mock_server, tmp_path):
+    db_file = tmp_path / "test_jobs.db"
+    storage = Storage(str(db_file))
+    job = storage.add_job(mock_server)
+
+    profile_dir = tmp_path / "profile"
+    resumes_dir = profile_dir / "resumes"
+    resumes_dir.mkdir(parents=True)
+    fake_resume = resumes_dir / "resume.pdf"
+    fake_resume.write_text("dummy resume content")
+
+    user_profile = tmp_path / "chrome_user_data"
+    user_profile.mkdir(parents=True)
+
+    logs = []
+    applicant = Applicant(
+        storage=storage,
+        resolver=FakeResolver(),
+        headless=True,
+        profile_dir=profile_dir,
+        user_data_dir=user_profile,
+        on_log=lambda m: logs.append(m),
+    )
+
+    outcome = applicant.apply(job_id=job.id, dry_run=True)
+    assert outcome.status == "ready_to_submit"
+    assert any("persistent user profile" in l.lower() for l in logs)
+    assert any(user_profile.iterdir())
+
+
+def test_applicant_cdp_fallback_to_persistent(mock_server, tmp_path):
+    db_file = tmp_path / "test_jobs.db"
+    storage = Storage(str(db_file))
+    job = storage.add_job(mock_server)
+
+    profile_dir = tmp_path / "profile"
+    resumes_dir = profile_dir / "resumes"
+    resumes_dir.mkdir(parents=True)
+    fake_resume = resumes_dir / "resume.pdf"
+    fake_resume.write_text("dummy resume content")
+
+    user_profile = tmp_path / "chrome_user_data_fallback"
+    user_profile.mkdir(parents=True)
+
+    logs = []
+    applicant = Applicant(
+        storage=storage,
+        resolver=FakeResolver(),
+        headless=True,
+        profile_dir=profile_dir,
+        cdp_url="http://127.0.0.1:59999",
+        user_data_dir=user_profile,
+        on_log=lambda m: logs.append(m),
+    )
+
+    outcome = applicant.apply(job_id=job.id, dry_run=True)
+    assert outcome.status == "ready_to_submit"
+    assert any("failed to connect to chrome" in l.lower() for l in logs)
+    assert any("falling back to persistent chrome profile" in l.lower() for l in logs)

@@ -21,6 +21,21 @@ The foundation plan (P0 to P5) is built. The detailed, ordered list is in `HANDO
 
 ## Where I stopped
 
+Chrome Persistent User Profile & CDP Live Browser Connection:
+- `src/jobagent/applicant.py`:
+  - Added support for persistent user profiles via `launch_persistent_context(user_data_dir=...)` with real Google Chrome (`channel="chrome"`).
+  - Added support for attaching to the user's currently open Google Chrome via Chrome DevTools Protocol (`p.chromium.connect_over_cdp("http://localhost:9222")`) with automatic fallback to persistent profile.
+  - Ensured cookies, logins (Google, LinkedIn, Lever, Greenhouse), extensions, and sessions persist across runs instead of opening ephemeral guest browsers.
+- `src/jobagent/dashboard.py`:
+  - Added "🌐 Chrome Profile & Session Settings" expander in Tab 1 with 3 session modes: Persistent Agent Profile (default, saves all logins), Connect to Running Chrome (CDP Port 9222), and Temporary Incognito.
+  - Linked `user_data_dir` and `cdp_url` into `Applicant` across Tab 1 and Tab 2 ("Apply Now").
+- `src/jobagent/cli.py`:
+  - Added `jobagent chrome` CLI command to launch Google Chrome with `--remote-debugging-port=9222`.
+  - Added `--chrome-profile`, `--ephemeral`, and `--cdp-url` flags to `jobagent apply`.
+- `tests/test_applicant.py`: Added tests `test_applicant_with_persistent_user_data_dir` and `test_applicant_cdp_fallback_to_persistent`.
+- `tests/test_cli.py`: Added `test_chrome_command_launches`.
+- All 264 tests passing (`uv run pytest` in 43s) and `check-config` clean.
+
 Dashboard Multi-Agent Status Cards Keyword Argument Fix & UI Test Coverage:
 - `src/jobagent/dashboard.py`: Fixed `render_card_matcher` signature and implementation to accept `details: str = ""` and `**kwargs`. Added `**kwargs` and case-insensitive status handling across all 4 agent render functions (`render_card_extractor`, `render_card_matcher`, `render_card_resolver`, `render_card_applicant`), preventing unexpected keyword argument exceptions.
 - `tests/test_dashboard.py`: Added tests `test_dashboard_agent_button_execution` and `test_dashboard_agent_button_waiting_and_answered_callbacks` verifying that clicking the agent start button with callbacks, scoring, waiting, and answering states updates status cards without exceptions.

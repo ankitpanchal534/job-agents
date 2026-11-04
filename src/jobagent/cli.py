@@ -323,6 +323,39 @@ def _resume(args) -> int:
     return 0
 
 
+def _chrome(args) -> int:
+    import platform
+    import subprocess
+
+    system = platform.system()
+    port = args.port or 9222
+    user_data_dir = args.user_data_dir
+
+    cmd = []
+    if system == "Darwin":
+        cmd = ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", f"--remote-debugging-port={port}"]
+        if user_data_dir:
+            cmd.append(f"--user-data-dir={user_data_dir}")
+    elif system == "Windows":
+        cmd = ["chrome.exe", f"--remote-debugging-port={port}"]
+        if user_data_dir:
+            cmd.append(f"--user-data-dir={user_data_dir}")
+    else:
+        cmd = ["google-chrome", f"--remote-debugging-port={port}"]
+        if user_data_dir:
+            cmd.append(f"--user-data-dir={user_data_dir}")
+
+    print(f"Launching Google Chrome with remote debugging on port {port}...")
+    try:
+        subprocess.Popen(cmd)
+        print(f"✓ Google Chrome launched on port {port}.")
+        print("Note: To connect to your personal profile, quit Chrome completely (Cmd+Q) before running this command.")
+        return 0
+    except Exception as e:
+        print(f"ERROR: Could not launch Chrome: {e}")
+        return 1
+
+
 def _apply(args, llm, env: Mapping[str, str], channels) -> int:
     loaded = _load_all(args)
     if loaded is None:
@@ -347,6 +380,7 @@ def _apply(args, llm, env: Mapping[str, str], channels) -> int:
             job = storage.add_job(target)
         job_id = job.id
 
+    user_data_dir = args.chrome_profile if not args.ephemeral else None
     applicant = Applicant(
         storage=storage,
         resolver=resolver,
@@ -356,6 +390,8 @@ def _apply(args, llm, env: Mapping[str, str], channels) -> int:
         resume_path=args.resume,
         on_log=print,
         wait_for_human=not args.no_wait,
+        user_data_dir=user_data_dir,
+        cdp_url=args.cdp_url,
     )
 
     outcome = applicant.apply(job_id=job_id, dry_run=args.dry_run, wait_for_human=not args.no_wait)
@@ -435,18 +471,26 @@ def main(
     resume.add_argument("--db", type=Path, default=None)
     add_settings_option(resume)
 
+    chrome_cmd = commands.add_parser("chrome", help="launch Google Chrome with remote debugging enabled")
+    chrome_cmd.add_argument("--port", type=int, default=9222, help="debugging port (default: 9222)")
+    chrome_cmd.add_argument("--user-data-dir", default=None, help="custom user data directory")
+
     apply_cmd = commands.add_parser("apply", help="open job URL in Chrome and fill application form")
     apply_cmd.add_argument("target", help="job URL or numeric job_id")
     apply_cmd.add_argument("--dry-run", action="store_true", default=False, help="fill the form but do not click submit")
     apply_cmd.add_argument("--headless", action="store_true", default=False, help="run browser in headless mode")
     apply_cmd.add_argument("--no-wait", action="store_true", default=False, help="do not keep browser open waiting for human resolution on blocks")
     apply_cmd.add_argument("--resume", type=Path, default=None, help="path to resume PDF file to attach")
+    apply_cmd.add_argument("--chrome-profile", default="data/chrome_profile", help="path to persistent Chrome profile")
+    apply_cmd.add_argument("--ephemeral", action="store_true", default=False, help="use temporary incognito browser without saving profile")
+    apply_cmd.add_argument("--cdp-url", default=None, help="connect to existing Chrome via CDP (e.g. http://localhost:9222)")
     apply_cmd.add_argument("--db", type=Path, default=None)
     add_config_options(apply_cmd)
 
     args = parser.parse_args(argv)
     env = load_env() if env is None else env
     handlers = {
+        "chrome": lambda: _chrome(args),
         "apply": lambda: _apply(args, llm, env, channels),
         "notify-test": lambda: _notify_test(args, channels),
         "block": lambda: _block(args, channels),

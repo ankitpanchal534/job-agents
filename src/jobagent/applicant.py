@@ -45,6 +45,8 @@ class Applicant:
         wait_for_human: bool = True,
         on_resolve: Optional[Callable[[str, str, str], None]] = None,
         on_action: Optional[Callable[[str, str, str], None]] = None,
+        user_data_dir: Optional[Path | str] = None,
+        cdp_url: Optional[str] = None,
     ):
         self._storage = storage
         self._resolver = resolver
@@ -58,6 +60,8 @@ class Applicant:
         self._wait_for_human = wait_for_human
         self._on_resolve = on_resolve or (lambda q, a, s: None)
         self._on_action = on_action or (lambda act, tgt, ext: None)
+        self._user_data_dir = str(user_data_dir) if user_data_dir else None
+        self._cdp_url = str(cdp_url) if cdp_url else None
 
     def _log(self, message: str) -> None:
         self._on_log(message)
@@ -402,13 +406,45 @@ class Applicant:
             )
 
         with sync_playwright() as p:
-            launch_kwargs = {"channel": "chrome", "headless": self._headless}
-            if not self._headless:
-                launch_kwargs["args"] = ["--start-maximized"]
+            browser = None
+            context = None
+            is_cdp = False
 
-            browser = p.chromium.launch(**launch_kwargs)
-            context = browser.new_context(viewport={"width": 1280, "height": 800} if self._headless else None)
-            page = context.new_page()
+            if self._cdp_url:
+                try:
+                    self._log(f"Connecting to running Chrome instance via CDP ({self._cdp_url})...")
+                    browser = p.chromium.connect_over_cdp(self._cdp_url)
+                    context = browser.contexts[0] if browser.contexts else browser.new_context()
+                    page = context.new_page()
+                    is_cdp = True
+                except Exception as cdp_err:
+                    self._log(f"Failed to connect to Chrome at {self._cdp_url}: {cdp_err}")
+                    if self._user_data_dir:
+                        self._log(f"Falling back to persistent Chrome profile at {self._user_data_dir}...")
+                    else:
+                        raise
+
+            if not is_cdp:
+                if self._user_data_dir:
+                    profile_path = Path(self._user_data_dir).resolve()
+                    profile_path.mkdir(parents=True, exist_ok=True)
+                    launch_kwargs = {
+                        "user_data_dir": str(profile_path),
+                        "channel": "chrome",
+                        "headless": self._headless,
+                    }
+                    if not self._headless:
+                        launch_kwargs["args"] = ["--start-maximized"]
+                    self._log(f"Opening Chrome with persistent user profile: {profile_path.name}...")
+                    context = p.chromium.launch_persistent_context(**launch_kwargs)
+                    page = context.pages[0] if context.pages else context.new_page()
+                else:
+                    launch_kwargs = {"channel": "chrome", "headless": self._headless}
+                    if not self._headless:
+                        launch_kwargs["args"] = ["--start-maximized"]
+                    browser = p.chromium.launch(**launch_kwargs)
+                    context = browser.new_context(viewport={"width": 1280, "height": 800} if self._headless else None)
+                    page = context.new_page()
 
             try:
                 self._log(f"Navigating to {url}...")
@@ -760,7 +796,29 @@ class Applicant:
                 self._keep_browser_open_for_inspection(page, seconds=20)
                 return ApplicantOutcome(status="failed", detail=detail, job_id=job_id)
             finally:
-                browser.close()
+                if is_cdp:
+                    try:
+                        if not page.is_closed():
+                            page.close()
+                    except Exception:
+                        pass
+                    if browser:
+                        try:
+                            browser.close()
+                        except Exception:
+                            pass
+                elif self._user_data_dir:
+                    if context:
+                        try:
+                            context.close()
+                        except Exception:
+                            pass
+                else:
+                    if browser:
+                        try:
+                            browser.close()
+                        except Exception:
+                            pass
 
     def _keep_browser_open_for_inspection(self, page, seconds: int = 30) -> None:
         if self._headless:

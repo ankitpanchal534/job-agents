@@ -162,6 +162,44 @@ def main() -> None:
         run_matcher_first = c_opt3.checkbox("Score match first", value=True)
         wait_for_human = c_opt4.checkbox("Keep Chrome open & wait on block", value=True)
 
+        with st.expander("🌐 Chrome Profile & Session Settings", expanded=False):
+            p_c1, p_c2 = st.columns([1, 1])
+            with p_c1:
+                profile_mode = st.selectbox(
+                    "Chrome Session Mode:",
+                    [
+                        "Persistent Agent Profile (Saves all logins & cookies)",
+                        "Connect to Running Chrome (CDP Port 9222)",
+                        "Temporary Guest / Incognito Profile",
+                    ],
+                    index=0,
+                    help=(
+                        "Persistent Profile (Recommended): Runs Chrome with a dedicated user data profile (data/chrome_profile). "
+                        "All logins (Google, LinkedIn, Lever, Greenhouse) are permanently preserved across runs so you never have to re-login.\n\n"
+                        "Connect to Running Chrome: Connects directly to your already open Chrome browser window and tabs (requires Chrome launched with --remote-debugging-port=9222).\n\n"
+                        "Temporary Guest Profile: Opens an empty throwaway browser session that is deleted when closed."
+                    ),
+                )
+            with p_c2:
+                if "Connect to Running" in profile_mode:
+                    cdp_input = st.text_input("Remote Debugging URL:", value="http://localhost:9222")
+                else:
+                    cdp_input = ""
+                    if "Persistent" in profile_mode:
+                        st.caption("📁 Profile directory: `data/chrome_profile`")
+
+            if "Connect to Running" in profile_mode:
+                st.info(
+                    "💡 **How to connect JobAgent directly to your open Chrome browser:**\n\n"
+                    "1. Completely quit Chrome (`Cmd+Q` on Mac)\n"
+                    "2. Start Chrome from Terminal with remote debugging:\n"
+                    "   ```bash\n"
+                    "   /Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome --remote-debugging-port=9222\n"
+                    "   ```\n"
+                    "   *(or run: `python -m jobagent chrome`)*\n"
+                    "3. JobAgent will now operate directly inside your active Chrome window with all your open tabs, history, and logins!"
+                )
+
         if active_resume_path:
             st.caption(f"📄 **Active Resume**: `{active_resume_path.name}` (manage in sidebar)")
         else:
@@ -422,6 +460,9 @@ def main() -> None:
                         log_callback("Launching Chrome browser with Agent Hands (virtual mouse & keyboard)...")
                         render_card_applicant("Navigating", action="Launching Chrome", target=url, hands_state="Hands Active")
                         hands = BrowserHands(enabled=visible_chrome)
+                        chosen_user_data_dir = "data/chrome_profile" if "Persistent" in profile_mode else None
+                        chosen_cdp_url = cdp_input.strip() if ("Connect to Running" in profile_mode and cdp_input.strip()) else None
+
                         applicant = Applicant(
                             storage=storage,
                             resolver=resolver,
@@ -433,6 +474,8 @@ def main() -> None:
                             on_log=log_callback,
                             on_resolve=resolve_callback,
                             on_action=action_callback,
+                            user_data_dir=chosen_user_data_dir,
+                            cdp_url=chosen_cdp_url,
                         )
 
                         outcome = applicant.apply(job_id=job.id, dry_run=dry_run, wait_for_human=wait_for_human)
@@ -479,6 +522,7 @@ def main() -> None:
                                     resume_path=active_resume_path,
                                     wait_for_human=True,
                                     on_log=st.toast,
+                                    user_data_dir="data/chrome_profile",
                                 )
                                 app_res = app.apply(job_id=j.id, dry_run=False, wait_for_human=True)
                                 st.info(f"Result: {app_res.status.upper()} - {app_res.detail}")
