@@ -170,54 +170,142 @@ def main() -> None:
         # Multi-Agent Real-Time Status Cards
         st.markdown("#### 🤖 Multi-Agent Live Status")
         m_c1, m_c2, m_c3, m_c4 = st.columns(4)
+        card_ext = m_c1.empty()
+        card_mat = m_c2.empty()
+        card_res = m_c3.empty()
+        card_app = m_c4.empty()
 
-        with m_c1:
-            st.markdown(
-                """<div style="border: 1px solid #3b82f6; border-radius: 8px; padding: 10px; min-height: 140px;">
-                <b style="color: #3b82f6;">🔍 Extractor Agent</b><br>
-                <small id="extractor-status">Status: <b>Idle</b></small><br>
-                <div id="extractor-details" style="font-size: 12px; margin-top: 6px; color: #94a3b8;">
-                Awaiting job posting...
-                </div>
+        def render_card_extractor(status: str, title: str = "", company: str = "", details: str = ""):
+            status_colors = {
+                "Idle": "#94a3b8",
+                "Extracting...": "#f59e0b",
+                "Completed": "#10b981",
+                "Failed": "#ef4444",
+            }
+            color = status_colors.get(status, "#38bdf8")
+            badge_bg = f"{color}22"
+            card_ext.markdown(
+                f"""<div style="border: 1px solid {color}; border-radius: 8px; padding: 12px; min-height: 160px; background-color: rgba(255,255,255,0.02);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <b style="color: #38bdf8; font-size: 14px;">🔍 Extractor Agent</b>
+                        <span style="background: {badge_bg}; color: {color}; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600; border: 1px solid {color}44;">{status}</span>
+                    </div>
+                    <div style="font-size: 13px; font-weight: 600; color: #f1f5f9; margin-bottom: 4px;">{company or '—'}</div>
+                    <div style="font-size: 12px; color: #cbd5e1; margin-bottom: 6px;">{title or 'No active job'}</div>
+                    <div style="font-size: 11px; color: #94a3b8; line-height: 1.4;">{details or 'Awaiting job posting...'}</div>
                 </div>""",
                 unsafe_allow_html=True,
             )
 
-        with m_c2:
-            st.markdown(
-                """<div style="border: 1px solid #10b981; border-radius: 8px; padding: 10px; min-height: 140px;">
-                <b style="color: #10b981;">⚖️ Matcher Agent</b><br>
-                <small id="matcher-status">Status: <b>Idle</b></small><br>
-                <div id="matcher-details" style="font-size: 12px; margin-top: 6px; color: #94a3b8;">
-                Awaiting extraction...
-                </div>
+        def render_card_matcher(
+            status: str,
+            score: Optional[float] = None,
+            decision: str = "",
+            reason: str = "",
+            matched: list[str] = [],
+            missing: list[str] = [],
+        ):
+            status_colors = {
+                "Idle": "#94a3b8",
+                "Scoring...": "#f59e0b",
+                "apply": "#10b981",
+                "watch_later": "#f59e0b",
+                "reject": "#ef4444",
+            }
+            color = status_colors.get(decision.lower(), status_colors.get(status.lower(), "#10b981"))
+            badge_bg = f"{color}22"
+            score_disp = f"<b style='font-size: 16px; color: {color};'>{int(score)}%</b>" if score is not None else "<span style='color: #94a3b8;'>—</span>"
+            decision_label = decision.upper() if decision else status
+
+            matched_pills = "".join(f"<span style='background: #10b98122; color: #10b981; border: 1px solid #10b98144; padding: 1px 5px; border-radius: 4px; font-size: 10px; margin-right: 3px;'>✓ {s}</span>" for s in (matched or [])[:3])
+            missing_pills = "".join(f"<span style='background: #ef444422; color: #ef4444; border: 1px solid #ef444444; padding: 1px 5px; border-radius: 4px; font-size: 10px; margin-right: 3px;'>✗ {s}</span>" for s in (missing or [])[:2])
+
+            card_mat.markdown(
+                f"""<div style="border: 1px solid {color}; border-radius: 8px; padding: 12px; min-height: 160px; background-color: rgba(255,255,255,0.02);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <b style="color: #10b981; font-size: 14px;">⚖️ Matcher Agent</b>
+                        <span style="background: {badge_bg}; color: {color}; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600; border: 1px solid {color}44;">{decision_label}</span>
+                    </div>
+                    <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; font-size: 12px; color: #cbd5e1;">
+                        <span>Match Score:</span> {score_disp}
+                    </div>
+                    <div style="margin-bottom: 6px; line-height: 1.6;">{matched_pills} {missing_pills}</div>
+                    <div style="font-size: 11px; color: #94a3b8; line-height: 1.3;">{reason[:80] + ('...' if len(reason) > 80 else '') if reason else 'Awaiting extraction...'}</div>
                 </div>""",
                 unsafe_allow_html=True,
             )
 
-        with m_c3:
-            st.markdown(
-                """<div style="border: 1px solid #f59e0b; border-radius: 8px; padding: 10px; min-height: 140px;">
-                <b style="color: #f59e0b;">💡 Resolver Agent</b><br>
-                <small id="resolver-status">Status: <b>Idle</b></small><br>
-                <div id="resolver-details" style="font-size: 12px; margin-top: 6px; color: #94a3b8;">
-                Awaiting form questions...
-                </div>
+        def render_card_resolver(status: str, question: str = "", answer: str = "", source: str = ""):
+            status_colors = {
+                "Idle": "#94a3b8",
+                "Resolving...": "#f59e0b",
+                "Resolved": "#10b981",
+                "curated": "#10b981",
+                "generated": "#3b82f6",
+                "needs_input": "#ef4444",
+                "Answered": "#10b981",
+                "Needs Input": "#ef4444",
+                "Waiting on User": "#ef4444",
+            }
+            color = status_colors.get(source, status_colors.get(status, "#f59e0b"))
+            badge_bg = f"{color}22"
+            q_disp = question[:45] + ("..." if len(question) > 45 else "") if question else "Awaiting form questions..."
+            a_disp = answer[:35] + ("..." if len(answer) > 35 else "") if answer else "—"
+
+            card_res.markdown(
+                f"""<div style="border: 1px solid {color}; border-radius: 8px; padding: 12px; min-height: 160px; background-color: rgba(255,255,255,0.02);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <b style="color: #f59e0b; font-size: 14px;">💡 Resolver Agent</b>
+                        <span style="background: {badge_bg}; color: {color}; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600; border: 1px solid {color}44;">{status}</span>
+                    </div>
+                    <div style="font-size: 11px; color: #94a3b8; margin-bottom: 3px;">Active Question:</div>
+                    <div style="font-size: 12px; font-weight: 600; color: #f1f5f9; margin-bottom: 6px; line-height: 1.3;">{q_disp}</div>
+                    <div style="font-size: 11px; color: #94a3b8;">Answer: <span style="color: #cbd5e1;">{a_disp}</span></div>
+                    <div style="font-size: 10px; color: #64748b; margin-top: 4px;">Source: {source or 'profile/answers.yaml'}</div>
                 </div>""",
                 unsafe_allow_html=True,
             )
 
-        with m_c4:
-            st.markdown(
-                """<div style="border: 1px solid #8b5cf6; border-radius: 8px; padding: 10px; min-height: 140px;">
-                <b style="color: #8b5cf6;">🖱️ Browser Applicant</b><br>
-                <small id="applicant-status">Status: <b>Idle</b></small><br>
-                <div id="applicant-details" style="font-size: 12px; margin-top: 6px; color: #94a3b8;">
-                Virtual hands ready.
-                </div>
+        def render_card_applicant(status: str, action: str = "", target: str = "", hands_state: str = "Virtual Hands Ready"):
+            status_colors = {
+                "Idle": "#94a3b8",
+                "Navigating": "#3b82f6",
+                "Typing": "#a855f7",
+                "Clicking": "#8b5cf6",
+                "Attaching": "#3b82f6",
+                "Selecting": "#8b5cf6",
+                "Checking": "#8b5cf6",
+                "Verified": "#10b981",
+                "Waiting for Human": "#ef4444",
+                "Answered": "#10b981",
+                "Completed": "#10b981",
+                "Failed": "#ef4444",
+                "running": "#8b5cf6",
+            }
+            color = status_colors.get(status, "#8b5cf6")
+            badge_bg = f"{color}22"
+            act_disp = action[:45] + ("..." if len(action) > 45 else "") if action else "Virtual hands standby."
+            tgt_disp = target[:35] + ("..." if len(target) > 35 else "") if target else "—"
+
+            card_app.markdown(
+                f"""<div style="border: 1px solid {color}; border-radius: 8px; padding: 12px; min-height: 160px; background-color: rgba(255,255,255,0.02);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <b style="color: #8b5cf6; font-size: 14px;">🖱️ Browser Applicant</b>
+                        <span style="background: {badge_bg}; color: {color}; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600; border: 1px solid {color}44;">{status}</span>
+                    </div>
+                    <div style="font-size: 11px; color: #94a3b8; margin-bottom: 3px;">Current Action:</div>
+                    <div style="font-size: 12px; font-weight: 600; color: #f1f5f9; margin-bottom: 6px; line-height: 1.3;">{act_disp}</div>
+                    <div style="font-size: 11px; color: #94a3b8;">Target: <span style="color: #cbd5e1;">{tgt_disp}</span></div>
+                    <div style="font-size: 10px; color: #a855f7; margin-top: 4px;">Hands: {hands_state}</div>
                 </div>""",
                 unsafe_allow_html=True,
             )
+
+        # Initial Card State
+        render_card_extractor("Idle")
+        render_card_matcher("Idle")
+        render_card_resolver("Idle")
+        render_card_applicant("Idle", hands_state="Virtual Hands Ready" if visible_chrome else "Headless Mode")
 
         st.markdown("")
 
@@ -236,6 +324,16 @@ def main() -> None:
                     logs.append(f"[{timestamp}] {msg}")
                     log_box.code("\n".join(logs[-15:]), language="text")
 
+                def resolve_callback(q: str, a: str, src: str):
+                    render_card_resolver("Resolved", question=q, answer=a, source=src)
+
+                def action_callback(action: str, target: str, extra: str):
+                    render_card_applicant(action, action=f"{action}: {target}", target=target, hands_state=extra)
+                    if action == "Waiting for Human":
+                        render_card_resolver("Needs Input", question=target, answer="Waiting in Chrome...", source="needs_input")
+                    elif action == "Answered":
+                        render_card_resolver("Answered", question=target, answer=extra, source="Human in Chrome")
+
                 with progress_container:
                     st.info(f"Processing {len(lines)} job posting(s)...")
 
@@ -248,6 +346,8 @@ def main() -> None:
                         # Matcher step
                         if run_matcher_first:
                             log_callback("Fetching JD & evaluating match score against profile...")
+                            render_card_extractor("Extracting...", details=f"Reading {url[:35]}...")
+                            render_card_matcher("Scoring...", details="Evaluating skills against profile...")
                             try:
                                 jd_text = fetch_jd_text(url)
                                 outcome = match_job(
@@ -260,6 +360,20 @@ def main() -> None:
                                 if outcome.result:
                                     res = outcome.result
                                     score_val = res.score if res.score is not None else 0
+                                    render_card_extractor(
+                                        "Completed",
+                                        title=res.posting.title,
+                                        company=res.posting.company,
+                                        details=f"Skills: {len(res.posting.must_have_skills)} must-have, {len(res.posting.nice_to_have_skills)} nice-to-have",
+                                    )
+                                    render_card_matcher(
+                                        res.decision.upper(),
+                                        score=res.score,
+                                        decision=res.decision,
+                                        reason=res.reason,
+                                        matched=[s for s in res.posting.must_have_skills if s not in res.missing_must_haves],
+                                        missing=res.missing_must_haves,
+                                    )
                                     log_callback(f"Match result: {res.decision.upper()} (Score: {score_val}/100) - {res.reason}")
                                     if res.decision == "reject":
                                         rejection_msg = f"Match rejected: {res.reason}. (Uncheck 'Score match first' to apply anyway)"
@@ -268,9 +382,12 @@ def main() -> None:
                                         continue
                             except Exception as match_err:
                                 log_callback(f"Match evaluation warning: {match_err}")
+                                render_card_extractor("Failed", details=str(match_err)[:60])
+                                render_card_matcher("Failed", reason=str(match_err)[:60])
 
                         # Browser applicant step
                         log_callback("Launching Chrome browser with Agent Hands (virtual mouse & keyboard)...")
+                        render_card_applicant("Navigating", action="Launching Chrome", target=url, hands_state="Hands Active")
                         hands = BrowserHands(enabled=visible_chrome)
                         applicant = Applicant(
                             storage=storage,
@@ -281,10 +398,13 @@ def main() -> None:
                             hands=hands,
                             wait_for_human=wait_for_human,
                             on_log=log_callback,
+                            on_resolve=resolve_callback,
+                            on_action=action_callback,
                         )
 
                         outcome = applicant.apply(job_id=job.id, dry_run=dry_run, wait_for_human=wait_for_human)
                         log_callback(f"Application finished: {outcome.status.upper()} - {outcome.detail}")
+                        render_card_applicant(outcome.status.upper(), action=outcome.detail, target=url, hands_state="Finished")
 
                     st.success("✅ Application processing finished! Check the live logs above and the Applications Tracker tab.")
 

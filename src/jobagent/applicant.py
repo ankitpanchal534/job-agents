@@ -43,6 +43,8 @@ class Applicant:
         on_status: Optional[Callable[[str, str], None]] = None,
         hands: Optional[BrowserHands] = None,
         wait_for_human: bool = True,
+        on_resolve: Optional[Callable[[str, str, str], None]] = None,
+        on_action: Optional[Callable[[str, str, str], None]] = None,
     ):
         self._storage = storage
         self._resolver = resolver
@@ -54,12 +56,26 @@ class Applicant:
         self._on_status = on_status or (lambda status, detail: None)
         self._hands = hands if hands is not None else BrowserHands(enabled=not headless)
         self._wait_for_human = wait_for_human
+        self._on_resolve = on_resolve or (lambda q, a, s: None)
+        self._on_action = on_action or (lambda act, tgt, ext: None)
 
     def _log(self, message: str) -> None:
         self._on_log(message)
 
     def _status(self, status: str, detail: str) -> None:
         self._on_status(status, detail)
+
+    def _resolve_notify(self, question: str, answer: str, source: str) -> None:
+        try:
+            self._on_resolve(question, answer, source)
+        except Exception:
+            pass
+
+    def _action_notify(self, action: str, target: str, extra: str = "") -> None:
+        try:
+            self._on_action(action, target, extra)
+        except Exception:
+            pass
 
     def _find_resume_pdf(self) -> Optional[Path]:
         if self._resume_path and self._resume_path.is_file():
@@ -200,6 +216,8 @@ class Applicant:
             pass
 
         self._hands.set_label(page, f"Please fill: {prompt[:20]}...")
+        self._resolve_notify(prompt, "Needs input (blocked)", "needs_input")
+        self._action_notify("Waiting for Human", prompt, "Chrome open & highlighted")
         self._log(
             f"⏳ AGENT WAITING: Please enter '{prompt}' directly in the open Chrome window.\n"
             f"The agent is actively watching and will automatically resume once answered."
@@ -282,6 +300,8 @@ class Applicant:
         self._hands.set_label(page, "")
 
         self._save_learned(prompt, user_val, job_id=job_id)
+        self._resolve_notify(prompt, user_val, "Human in Chrome")
+        self._action_notify("Answered", prompt, f"Captured: {user_val[:20]}")
 
         if not self._storage.is_block_resolved(block.id):
             self._storage.resume_job(job_id)
@@ -392,6 +412,7 @@ class Applicant:
 
             try:
                 self._log(f"Navigating to {url}...")
+                self._action_notify("Navigating", url, "Opening job page in Chrome")
                 page.goto(url, wait_until="domcontentloaded", timeout=45000)
                 page.wait_for_timeout(2000)
                 self._hands.inject_cursor(page)
@@ -444,6 +465,7 @@ class Applicant:
                     ).first
                     if apply_btn.count() > 0 and apply_btn.is_visible():
                         self._log("Found 'Apply' button on job page. Clicking to navigate to application form...")
+                        self._action_notify("Clicking", "Apply Button", "Navigating to application form")
                         self._hands.click_element(page, apply_btn, label="Clicking Apply...")
                         page.wait_for_timeout(3000)
                         self._hands.inject_cursor(page)
@@ -502,6 +524,8 @@ class Applicant:
                         existing_val = self._read_element_value(page, field)
                         if existing_val:
                             self._log(f"Field '{field.label or prompt}' already filled: {existing_val[:30]}")
+                            self._resolve_notify(prompt, existing_val, "pre_filled")
+                            self._action_notify("Verified", field.label or prompt, f"Pre-filled: {existing_val[:20]}")
                             self._save_learned(prompt, existing_val, job_id=job_id)
                             self._storage.add_journey_step(
                                 job_id=job_id,
@@ -518,6 +542,7 @@ class Applicant:
                             resume_path = self._find_resume_pdf()
                             if resume_path:
                                 self._log(f"Uploading resume: {resume_path.name}")
+                                self._action_notify("Attaching", "Resume PDF", resume_path.name)
                                 page.locator(field.selector).first.set_input_files(str(resume_path))
                                 page.wait_for_timeout(2000)
                                 self._storage.add_journey_step(
@@ -574,6 +599,8 @@ class Applicant:
 
                             if chosen_opt:
                                 self._log(f"Selecting radio for '{field.label or prompt}': {chosen_opt}")
+                                self._resolve_notify(prompt, chosen_opt, res.source)
+                                self._action_notify("Selecting", field.label or prompt, f"Radio: {chosen_opt}")
                                 r_loc = page.locator(f"input[type='radio'][name='{field.name}'][value='{chosen_opt}']").first
                                 target_loc = r_loc if r_loc.count() > 0 else page.locator(f"label:has-text('{chosen_opt}')").first
                                 self._hands.click_element(page, target_loc, label=f"Select: {chosen_opt}")
@@ -599,6 +626,8 @@ class Applicant:
                             res = self._resolver.resolve(prompt)
                             if res.answer and res.answer.lower() in ("yes", "true", "agree", "accept", "1"):
                                 self._log(f"Checking box '{field.label or prompt}'")
+                                self._resolve_notify(prompt, res.answer, res.source)
+                                self._action_notify("Checking", field.label or prompt, "Checkbox")
                                 cb_loc = page.locator(field.selector).first
                                 self._hands.click_element(page, cb_loc, label="Checking box")
                                 self._storage.add_journey_step(
@@ -618,6 +647,8 @@ class Applicant:
                                 opt = find_best_select_option(field.options, res.answer)
                                 if opt:
                                     self._log(f"Selecting dropdown '{field.label or prompt}': {opt}")
+                                    self._resolve_notify(prompt, opt, res.source)
+                                    self._action_notify("Selecting", field.label or prompt, f"Dropdown: {opt}")
                                     page.locator(field.selector).first.select_option(label=opt)
                                     page.wait_for_timeout(300)
                                     self._storage.add_journey_step(
@@ -640,6 +671,8 @@ class Applicant:
                         res = self._resolver.resolve(prompt)
                         if res.answer:
                             self._log(f"Filled '{field.label or prompt}': {res.answer[:30]}...")
+                            self._resolve_notify(prompt, res.answer, res.source)
+                            self._action_notify("Typing", field.label or prompt, f"Value: {res.answer[:20]}...")
                             loc = page.locator(field.selector).first
                             self._hands.type_into_element(page, loc, res.answer, label=f"Typing {prompt[:12]}...")
                             page.wait_for_timeout(200 if not self._headless else 50)
@@ -667,6 +700,7 @@ class Applicant:
                     detail = "Dry-run mode: Form filled successfully, paused before final submit."
                     self._log(detail)
                     self._status("ready_to_submit", detail)
+                    self._action_notify("Completed", "Dry-Run Ready", "All fields filled successfully")
                     self._storage.add_journey_step(
                         job_id=job_id,
                         step="submission",
@@ -682,6 +716,7 @@ class Applicant:
                 self._log("Submitting application...")
                 submit_btn = page.locator("button[type='submit'], input[type='submit'], button:has-text('Submit'), button:has-text('Apply')").first
                 if submit_btn.is_visible():
+                    self._action_notify("Submitting", "Submit Button", "Submitting form...")
                     self._hands.click_element(page, submit_btn, label="Submitting Application...")
                     page.wait_for_timeout(3000)
                     self._storage.set_status(job_id, "applied")
