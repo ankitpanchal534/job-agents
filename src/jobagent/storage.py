@@ -66,6 +66,17 @@ CREATE TABLE IF NOT EXISTS blocks (
     resolved_at     TEXT,
     notified_at     TEXT
 );
+CREATE TABLE IF NOT EXISTS journey_steps (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    job_id     INTEGER NOT NULL REFERENCES jobs(id),
+    step       TEXT NOT NULL,
+    agent      TEXT NOT NULL,
+    status     TEXT NOT NULL,
+    summary    TEXT NOT NULL,
+    details    TEXT,
+    created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_journey_job ON journey_steps(job_id, id);
 """
 
 _ANSWER_COLUMNS = "id, job_id, question, answer, source, status, created_at, updated_at"
@@ -130,6 +141,18 @@ class Block:
     notified_at: Optional[str]
 
 
+@dataclass(frozen=True)
+class JourneyStep:
+    id: int
+    job_id: int
+    step: str
+    agent: str
+    status: str
+    summary: str
+    details: Optional[dict]
+    created_at: str
+
+
 def _evaluation(row: sqlite3.Row) -> Evaluation:
     return Evaluation(
         id=row["id"],
@@ -141,6 +164,21 @@ def _evaluation(row: sqlite3.Row) -> Evaluation:
         decision=row["decision"],
         reason=row["reason"],
         model=row["model"],
+        created_at=row["created_at"],
+    )
+
+
+def _journey_step(row: sqlite3.Row) -> JourneyStep:
+    details_str = row["details"]
+    details = json.loads(details_str) if details_str else None
+    return JourneyStep(
+        id=row["id"],
+        job_id=row["job_id"],
+        step=row["step"],
+        agent=row["agent"],
+        status=row["status"],
+        summary=row["summary"],
+        details=details,
         created_at=row["created_at"],
     )
 
@@ -254,6 +292,40 @@ class Storage:
             conn.execute("UPDATE blocks SET resolved_at = ? WHERE job_id = ? AND resolved_at IS NULL", (now, job_id))
             conn.execute("UPDATE jobs SET status = 'queued', updated_at = ? WHERE id = ?", (now, job_id))
             return self._fetch(conn, job_id)
+
+    def is_block_resolved(self, block_id: int) -> bool:
+        with closing(self._connect()) as conn:
+            row = conn.execute("SELECT resolved_at FROM blocks WHERE id = ?", (block_id,)).fetchone()
+            if not row:
+                return True
+            return row["resolved_at"] is not None
+
+    def add_journey_step(
+        self,
+        job_id: int,
+        step: str,
+        agent: str,
+        status: str,
+        summary: str,
+        details: Optional[dict] = None,
+    ) -> JourneyStep:
+        now = self._now()
+        details_json = json.dumps(details) if details is not None else None
+        with closing(self._connect()) as conn, conn:
+            cursor = conn.execute(
+                "INSERT INTO journey_steps (job_id, step, agent, status, summary, details, created_at)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (job_id, step, agent, status, summary, details_json, now),
+            )
+            row = conn.execute("SELECT * FROM journey_steps WHERE id = ?", (cursor.lastrowid,)).fetchone()
+            return _journey_step(row)
+
+    def list_journey_steps(self, job_id: int) -> list[JourneyStep]:
+        with closing(self._connect()) as conn:
+            rows = conn.execute(
+                "SELECT * FROM journey_steps WHERE job_id = ? ORDER BY id ASC", (job_id,)
+            ).fetchall()
+            return [_journey_step(row) for row in rows]
 
     def mark_block_notified(self, block_id: int) -> None:
         with closing(self._connect()) as conn, conn:

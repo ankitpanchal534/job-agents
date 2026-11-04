@@ -21,7 +21,8 @@ The foundation plan (P0 to P5) is built. The detailed, ordered list is in `HANDO
 
 ## Where I stopped
 
-MacBook setup completed via `uv`: `.venv` configured with `uv pip install -e ".[dev,ui]"`, all 236 tests passing, Ollama connected with `qwen2.5-coder-7b-8k:latest`, `check-config`, `models`, `llm-test` (0.4s response), and `notify-test` verified working.
+Task 1 completed: Application journey audit storage (`journey_steps` table, `JourneyStep` dataclass, `add_journey_step`, `list_journey_steps`, and `is_block_resolved` in `src/jobagent/storage.py`). All 251 tests passing.
+Next: Task 2 (Virtual Mouse & Keyboard Engine with injected cursor overlay in `src/jobagent/browser_hands.py`).
 
 ## Notes for whoever continues
 
@@ -58,3 +59,4 @@ MacBook setup completed via `uv`: `.venv` configured with `uv pip install -e ".[
 - Handover: wrote `HANDOVER.md` (briefing for a new LLM: built, verified, left, gotchas) and `MACBOOK_SETUP.md` (moving to macOS and running with Ollama). Checked the Windows `tar` zip command in the guide: 9.3 MB, no `.venv`, `.env` or `data`.
 - MacBook setup (uv): installed dev/ui dependencies with uv, created 8k-context Ollama model qwen2.5-coder-7b-8k:latest, updated settings.yaml (provider: local, desktop notifications: false), verified check-config, models, llm-test (0.4s response), notify-test, and all 236 pytest tests.
 - Documentation: created comprehensive usage and post-setup run instructions in README.md.
+- Feature: built visible Chrome Browser Applicant (`applicant.py`, `form_inspector.py`) and full-featured Streamlit Control Center (`dashboard.py`). Added 12 new automated tests (248 total passing).
