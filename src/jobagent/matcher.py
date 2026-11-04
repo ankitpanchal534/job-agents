@@ -183,6 +183,36 @@ def match_job(
         reason=result.reason,
         model=matcher.model_label,
     )
+    storage.add_journey_step(
+        job.id,
+        step="extractor",
+        agent="ExtractorAgent",
+        status="success",
+        summary=f"Extracted role '{result.posting.title or 'N/A'}' at '{result.posting.company or 'N/A'}'",
+        details={
+            "title": result.posting.title,
+            "company": result.posting.company,
+            "country": result.posting.country,
+            "city": result.posting.city,
+            "remote": result.posting.remote,
+            "must_have_skills": result.posting.must_have_skills,
+            "nice_to_have_skills": result.posting.nice_to_have_skills,
+        },
+    )
+    storage.add_journey_step(
+        job.id,
+        step="matcher",
+        agent="MatcherAgent",
+        status="success" if result.decision == "apply" else ("warning" if result.decision == "watch_later" else "failed"),
+        summary=f"Decision: {result.decision.upper()} (Score: {result.score if result.score is not None else 'N/A'}%) - {result.reason}",
+        details={
+            "decision": result.decision,
+            "score": result.score,
+            "filter_reasons": result.filter_reasons,
+            "missing_must_haves": result.missing_must_haves,
+            "reason": result.reason,
+        },
+    )
     storage.update_job(
         job.id,
         title=result.posting.title or None,

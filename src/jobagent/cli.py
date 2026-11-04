@@ -17,6 +17,7 @@ from jobagent.config import (
     load_settings,
     resolve_task,
 )
+from jobagent.applicant import Applicant
 from jobagent.batch import read_urls, run_batch
 from jobagent.calibrate import load_labels, run_calibration
 from jobagent.fetch import FetchError, fetch_jd_text
@@ -322,6 +323,46 @@ def _resume(args) -> int:
     return 0
 
 
+def _apply(args, llm, env: Mapping[str, str], channels) -> int:
+    loaded = _load_all(args)
+    if loaded is None:
+        return 1
+    settings, prefs, profile = loaded
+    storage = Storage(args.db or db_path(settings))
+    client = llm or ChatClient(settings, env=env)
+    resolver = Resolver(profile, prefs, settings, llm=client, extra_bank=storage.approved_answers())
+    active_channels = channels or build_channels(settings)[0]
+    notifier = Notifier(storage=storage, channels=active_channels, cooldown_minutes=settings.notifications.cooldown_minutes)
+
+    target = args.target.strip()
+    if target.isdigit():
+        job_id = int(target)
+        job = storage.get_job(job_id)
+        if not job:
+            print(f"ERROR: job #{job_id} not found")
+            return 1
+    else:
+        job = storage.get_job_by_url(target)
+        if not job:
+            job = storage.add_job(target)
+        job_id = job.id
+
+    applicant = Applicant(
+        storage=storage,
+        resolver=resolver,
+        notifier=notifier,
+        headless=args.headless,
+        profile_dir=args.profile_dir,
+        resume_path=args.resume,
+        on_log=print,
+        wait_for_human=not args.no_wait,
+    )
+
+    outcome = applicant.apply(job_id=job_id, dry_run=args.dry_run, wait_for_human=not args.no_wait)
+    print(f"\nResult: {outcome.status.upper()} - {outcome.detail}")
+    return 0 if outcome.status in ("applied", "ready_to_submit") else 1
+
+
 def main(
     argv: Optional[Sequence[str]] = None,
     llm=None,
@@ -394,9 +435,19 @@ def main(
     resume.add_argument("--db", type=Path, default=None)
     add_settings_option(resume)
 
+    apply_cmd = commands.add_parser("apply", help="open job URL in Chrome and fill application form")
+    apply_cmd.add_argument("target", help="job URL or numeric job_id")
+    apply_cmd.add_argument("--dry-run", action="store_true", default=False, help="fill the form but do not click submit")
+    apply_cmd.add_argument("--headless", action="store_true", default=False, help="run browser in headless mode")
+    apply_cmd.add_argument("--no-wait", action="store_true", default=False, help="do not keep browser open waiting for human resolution on blocks")
+    apply_cmd.add_argument("--resume", type=Path, default=None, help="path to resume PDF file to attach")
+    apply_cmd.add_argument("--db", type=Path, default=None)
+    add_config_options(apply_cmd)
+
     args = parser.parse_args(argv)
     env = load_env() if env is None else env
     handlers = {
+        "apply": lambda: _apply(args, llm, env, channels),
         "notify-test": lambda: _notify_test(args, channels),
         "block": lambda: _block(args, channels),
         "blocks": lambda: _blocks(args),

@@ -21,8 +21,8 @@ The foundation plan (P0 to P5) is built. The detailed, ordered list is in `HANDO
 
 ## Where I stopped
 
-Task 2 completed: Virtual Mouse & Keyboard ("Agent Hands") Engine (`src/jobagent/browser_hands.py` with cursor injection, quadratic Bézier trajectories, ripple effects, action labels, and human typing delays). All 254 tests passing.
-Next: Task 3 (Live block waiting in open browser and journey tracking in `src/jobagent/applicant.py`).
+Task 3 completed: Live block waiting in open browser session, journey step audit tracking across applicant/matcher, virtual hands integration, and `--no-wait` CLI flag in `src/jobagent/applicant.py`, `matcher.py`, and `cli.py`. All 256 tests passing.
+Next: Task 4 (Multi-Agent Real-Time UI cards & Expandable Journey Timeline in `src/jobagent/dashboard.py`).
 
 ## Notes for whoever continues
 
