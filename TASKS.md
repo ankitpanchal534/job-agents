@@ -21,8 +21,8 @@ The foundation plan (P0 to P5) is built. The detailed, ordered list is in `HANDO
 
 ## Where I stopped
 
-Task 1 completed: Application journey audit storage (`journey_steps` table, `JourneyStep` dataclass, `add_journey_step`, `list_journey_steps`, and `is_block_resolved` in `src/jobagent/storage.py`). All 251 tests passing.
-Next: Task 2 (Virtual Mouse & Keyboard Engine with injected cursor overlay in `src/jobagent/browser_hands.py`).
+Task 2 completed: Virtual Mouse & Keyboard ("Agent Hands") Engine (`src/jobagent/browser_hands.py` with cursor injection, quadratic Bézier trajectories, ripple effects, action labels, and human typing delays). All 254 tests passing.
+Next: Task 3 (Live block waiting in open browser and journey tracking in `src/jobagent/applicant.py`).
 
 ## Notes for whoever continues
 
