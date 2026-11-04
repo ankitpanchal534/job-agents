@@ -85,6 +85,25 @@ def test_complete_sends_the_task_model_and_settings_to_the_local_provider(server
     ]
 
 
+def test_complete_with_image_path_sends_multimodal_payload(server, tmp_path):
+    base_url, received, _ = server
+    client = ChatClient(make_settings(tmp_path, base_url), env={})
+
+    dummy_img = tmp_path / "test.png"
+    dummy_img.write_bytes(b"\x89PNG\r\n\x1a\nfakeimagebytes")
+
+    reply = client.complete("vision", "system vision", "check this image", image_path=dummy_img)
+
+    assert reply == "hello"
+    sent = received[0]["body"]
+    user_msg = sent["messages"][1]
+    assert user_msg["role"] == "user"
+    assert isinstance(user_msg["content"], list)
+    assert user_msg["content"][0]["text"] == "check this image"
+    assert user_msg["content"][1]["image_url"]["url"].startswith("data:image/png;base64,")
+
+
+
 def test_complete_uses_the_openai_model_and_key_when_toggled(server, tmp_path):
     base_url, received, _ = server
     client = ChatClient(make_settings(tmp_path, base_url, provider="openai"), env={"OPENAI_API_KEY": "sk-test"})

@@ -118,6 +118,36 @@ HTML_FORM_UNCONFIRMED = """<!DOCTYPE html>
 """
 
 
+HTML_CUSTOM_DROPDOWN_AND_SCROLL = """<!DOCTYPE html>
+<html>
+<body style="min-height: 2000px; margin: 0; padding: 20px;">
+  <div style="height: 600px; background: #eee;">
+    <h1>Job Description</h1>
+    <p>Scroll down or click Apply to reach application form.</p>
+    <button id="apply-btn" onclick="document.getElementById('form-section').scrollIntoView();">Apply for this job</button>
+  </div>
+  <div id="form-section" style="margin-top: 50px;">
+    <form id="app-form">
+      <label for="name">Full Name</label>
+      <input id="name" name="name" type="text" required>
+
+      <label for="custom-select">Experience Level</label>
+      <div id="custom-select" role="combobox" class="select__control" style="width: 200px; height: 35px; border: 1px solid black;" onclick="document.getElementById('options-list').style.display = 'block';">
+        <span id="selected-val">Choose...</span>
+      </div>
+      <div id="options-list" style="display: none;">
+        <div role="option" class="select__option" onclick="document.getElementById('selected-val').innerText='Senior (5+ years)'; document.getElementById('options-list').style.display='none';">Senior (5+ years)</div>
+        <div role="option" class="select__option" onclick="document.getElementById('selected-val').innerText='Junior (1-3 years)'; document.getElementById('options-list').style.display='none';">Junior (1-3 years)</div>
+      </div>
+
+      <button type="submit" id="submit-app">Submit Application</button>
+    </form>
+  </div>
+</body>
+</html>
+"""
+
+
 class MockHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -135,6 +165,8 @@ class MockHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(HTML_FORM_ERROR.encode("utf-8"))
         elif self.path.startswith("/form_unconfirmed"):
             self.wfile.write(HTML_FORM_UNCONFIRMED.encode("utf-8"))
+        elif self.path.startswith("/custom_dropdown"):
+            self.wfile.write(HTML_CUSTOM_DROPDOWN_AND_SCROLL.encode("utf-8"))
         else:
             self.wfile.write(HTML_FORM.encode("utf-8"))
 
@@ -165,6 +197,8 @@ class FakeResolver:
             return Resolution(answer="Excited about the role.", source="generated")
         if "authorized" in q:
             return Resolution(answer="Yes", source="curated")
+        if "experience" in q:
+            return Resolution(answer="Senior", source="curated")
         if "salary" in q:
             return Resolution(answer=None, blocked_reason="needs_input")
         return Resolution(answer=None, blocked_reason="needs_input")
@@ -474,4 +508,42 @@ def test_applicant_detects_unconfirmed_submission_does_not_falsely_apply(mock_se
     assert last_sub.status == "warning"
     assert last_sub.details.get("screenshot")
     assert Path(last_sub.details["screenshot"]).exists()
+
+
+class FakeVisionLLM:
+    def complete(self, task: str, system: str, user: str, image_path: str | None = None) -> str:
+        if "experience" in user.lower() or "senior" in user.lower():
+            return "Senior (5+ years)"
+        return "Senior (5+ years)"
+
+
+def test_applicant_visual_mode_scroll_and_custom_dropdown(mock_server, tmp_path):
+    db_file = tmp_path / "test_jobs.db"
+    storage = Storage(str(db_file))
+    job = storage.add_job(f"{mock_server}/custom_dropdown")
+
+    profile_dir = tmp_path / "profile"
+    resumes_dir = profile_dir / "resumes"
+    resumes_dir.mkdir(parents=True)
+    fake_resume = resumes_dir / "resume.pdf"
+    fake_resume.write_text("dummy resume content")
+
+    fake_llm = FakeVisionLLM()
+    applicant = Applicant(
+        storage=storage,
+        resolver=FakeResolver(),
+        headless=True,
+        profile_dir=profile_dir,
+        wait_for_human=False,
+        llm=fake_llm,
+    )
+
+    outcome = applicant.apply(job_id=job.id, dry_run=True, wait_for_human=False)
+    assert outcome.status == "ready_to_submit"
+
+    # Verify journey steps recorded field_input
+    steps = storage.list_journey_steps(job.id)
+    step_types = [s.step for s in steps]
+    assert "field_input" in step_types
+
 

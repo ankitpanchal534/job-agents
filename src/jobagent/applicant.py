@@ -16,6 +16,11 @@ from jobagent.form_inspector import (
     find_best_select_option,
     normalize_field_prompt,
 )
+from jobagent.visual_inspector import (
+    VisualField,
+    scan_visual_form,
+    normalize_visual_label,
+)
 from jobagent.notify import Notification, Notifier
 from jobagent.profile import DEFAULT_PROFILE_DIR, save_learned_answer
 from jobagent.resolver import Resolver
@@ -108,6 +113,7 @@ class Applicant:
         cdp_url: Optional[str] = None,
         profile_directory: Optional[str] = "jobagent",
         submission_timeout: float = 25.0,
+        llm: Optional[Any] = None,
     ):
         self._storage = storage
         self._resolver = resolver
@@ -125,6 +131,7 @@ class Applicant:
         self._cdp_url = str(cdp_url) if cdp_url else None
         self._profile_directory = profile_directory
         self._submission_timeout = submission_timeout
+        self._llm = llm if llm is not None else getattr(resolver, "_llm", None)
 
     def _log(self, message: str) -> None:
         self._on_log(message)
@@ -166,35 +173,53 @@ class Applicant:
         except Exception:
             return ""
 
-    def _read_element_value(self, page, field: FormField) -> Optional[str]:
+    def _read_element_value(self, page, field: Any) -> Optional[str]:
         """Reads current value entered into an element on the active page."""
         try:
-            if field.input_type == "radio":
-                checked = page.locator(f"input[type='radio'][name='{field.name}']:checked").first
-                if checked.count() > 0:
-                    val = checked.get_attribute("value") or ""
-                    if not val or val.lower() in ("on", "true"):
-                        lbl_el = checked.locator("xpath=ancestor::label[1]")
-                        val = (lbl_el.inner_text() if lbl_el.count() > 0 else "").strip()
-                    return val.strip() if val.strip() else None
+            f_type = getattr(field, "field_type", None) or getattr(field, "input_type", "")
+            f_tag = getattr(field, "tag", "")
+
+            # If it's a VisualField and value was already captured during scanning
+            val_cached = getattr(field, "value", None)
+            if val_cached and str(val_cached).strip() and not str(val_cached).strip().lower().startswith("select"):
+                if f_type not in ("button", "file"):
+                    return str(val_cached).strip()
+
+            if f_type == "radio":
+                f_name = getattr(field, "name", "")
+                if f_name:
+                    checked = page.locator(f"input[type='radio'][name='{f_name}']:checked").first
+                    if checked.count() > 0:
+                        val = checked.get_attribute("value") or ""
+                        if not val or val.lower() in ("on", "true"):
+                            lbl_el = checked.locator("xpath=ancestor::label[1]")
+                            val = (lbl_el.inner_text() if lbl_el.count() > 0 else "").strip()
+                        return val.strip() if val.strip() else None
                 return None
 
-            if field.tag == "select":
-                sel_loc = page.locator(field.selector).first
-                if sel_loc.count() > 0:
-                    val = sel_loc.evaluate("""el => {
-                        const opt = el.options[el.selectedIndex];
-                        return opt ? (opt.text || opt.value) : '';
-                    }""")
-                    if val and not val.strip().lower().startswith("select") and not val.strip().lower().startswith("choose"):
-                        return val.strip()
+            if f_type == "dropdown" or f_tag == "select":
+                sel = getattr(field, "selector", "")
+                if sel:
+                    sel_loc = page.locator(sel).first
+                    if sel_loc.count() > 0:
+                        val = sel_loc.evaluate("""el => {
+                            if (el.options && el.selectedIndex >= 0) {
+                                const opt = el.options[el.selectedIndex];
+                                return opt ? (opt.text || opt.value) : '';
+                            }
+                            return el.innerText || el.textContent || '';
+                        }""")
+                        if val and not val.strip().lower().startswith("select") and not val.strip().lower().startswith("choose"):
+                            return val.strip()
                 return None
 
-            if field.input_type in ("text", "number", "email", "tel") or field.tag == "textarea":
-                loc = page.locator(field.selector).first
-                if loc.count() > 0:
-                    val = loc.input_value()
-                    return val.strip() if val and val.strip() else None
+            if f_type in ("text", "number", "email", "tel", "textarea") or f_tag == "textarea":
+                sel = getattr(field, "selector", "")
+                if sel:
+                    loc = page.locator(sel).first
+                    if loc.count() > 0:
+                        val = loc.input_value()
+                        return val.strip() if val and val.strip() else None
                 return None
         except Exception:
             return None
@@ -682,6 +707,184 @@ class Applicant:
 
         return (last_status, last_msg)
 
+    def _find_and_scroll_to_form(self, page, max_scrolls: int = 8) -> bool:
+        """Scrolls like a human using mouse wheel to find application form or Apply button."""
+        self._log("Searching for application form / Apply button...")
+
+        app_indicators = ("name", "email", "phone", "resume", "cv", "linkedin", "experience", "education", "location")
+
+        for scroll_idx in range(max_scrolls):
+            fields = scan_visual_form(page)
+            input_fields = [f for f in fields if f.field_type in ("text", "textarea", "file", "dropdown")]
+
+            # Check if primary job application fields are in view
+            has_app_fields = any(any(ind in f.label.lower() for ind in app_indicators) for f in input_fields)
+
+            if has_app_fields and len(input_fields) >= 2:
+                self._log(f"✓ Application form detected in viewport (Found {len(input_fields)} fields).")
+                return True
+
+            # Check if an "Apply" button is visible in current viewport
+            buttons = [f for f in fields if f.field_type == "button"]
+            apply_btn = None
+            for b in buttons:
+                txt = b.label.lower()
+                if any(w in txt for w in ("apply for this", "apply now", "apply online", "apply for job", "submit application")):
+                    if not any(auth in txt for auth in ("linkedin", "indeed", "google", "newsletter", "subscribe")):
+                        apply_btn = b
+                        break
+
+            if apply_btn:
+                self._log(f"Found Apply button '{apply_btn.label}' at ({apply_btn.center_x}, {apply_btn.center_y}). Clicking...")
+                self._action_notify("Clicking", "Apply Button", apply_btn.label)
+                self._hands.click_coords(page, apply_btn.center_x, apply_btn.center_y, label=f"Click: {apply_btn.label[:12]}")
+                page.wait_for_timeout(1500)
+                new_fields = scan_visual_form(page)
+                if any(any(ind in f.label.lower() for ind in app_indicators) for f in new_fields):
+                    self._log("✓ Application form displayed after clicking Apply button.")
+                    return True
+
+            # Scroll down naturally with mouse wheel
+            self._log(f"Scrolling down to find form (scroll {scroll_idx + 1}/{max_scrolls})...")
+            self._hands.scroll_wheel(page, delta_y=600, steps=8, pause=0.02)
+            page.wait_for_timeout(500)
+
+        final_fields = scan_visual_form(page)
+        return any(any(ind in f.label.lower() for ind in app_indicators) for f in final_fields)
+
+    def _choose_dropdown_option_with_llm(
+        self,
+        question: str,
+        user_answer: str,
+        options: list[str],
+    ) -> Optional[str]:
+        """Uses LLM to select the best matching dropdown option for the user's answer."""
+        if not options:
+            return None
+        if len(options) == 1:
+            return options[0]
+
+        # Fast exact check
+        for opt in options:
+            if opt.lower().strip() == user_answer.lower().strip():
+                return opt
+
+        if self._llm:
+            try:
+                system_prompt = (
+                    "You are a form-filling assistant. Given a form question, the user's intended answer, "
+                    "and a list of available options, select the single option that best matches the user's intent. "
+                    "Return ONLY the exact option text from the list, with no extra punctuation or commentary."
+                )
+                user_prompt = (
+                    f"Question: {question}\n"
+                    f"User Answer: {user_answer}\n"
+                    f"Available Options:\n" + "\n".join(f"- {o}" for o in options)
+                )
+                chosen = self._llm.complete("answer_matching", system_prompt, user_prompt).strip()
+                chosen = chosen.strip("'\"`* ")
+                for opt in options:
+                    if opt.lower().strip() == chosen.lower().strip():
+                        return opt
+                for opt in options:
+                    if chosen.lower() in opt.lower() or opt.lower() in chosen.lower():
+                        return opt
+            except Exception as e:
+                self._log(f"Notice: LLM option selection fallback ({e})")
+
+        return find_best_select_option(options, user_answer)
+
+    def _select_dropdown_visually(
+        self,
+        page: Any,
+        field: VisualField,
+        prompt: str,
+        user_answer: str,
+    ) -> bool:
+        """Clicks dropdown coordinates, types if searchable, reads rendered DOM options, lets LLM pick, and clicks."""
+        self._action_notify("Selecting", prompt, "Opening dropdown...")
+        self._hands.click_coords(page, field.center_x, field.center_y, label=f"Open: {prompt[:15]}...")
+        page.wait_for_timeout(350)
+
+        if field.is_searchable:
+            self._hands.type_text(page, user_answer[:15], label=f"Search: {user_answer[:10]}...")
+            page.wait_for_timeout(400)
+
+        # Extract rendered options from DOM
+        rendered_options = page.evaluate("""() => {
+            const selectors = [
+                '[role="option"]',
+                '.select__option',
+                'div[class*="select__option"]',
+                'div[class*="option"]',
+                'li[role="option"]',
+                'li[class*="option"]',
+                '.menu-item',
+                'div[class*="menu"] div'
+            ];
+            const opts = [];
+            for (const sel of selectors) {
+                const els = Array.from(document.querySelectorAll(sel));
+                for (const el of els) {
+                    const rect = el.getBoundingClientRect();
+                    const style = window.getComputedStyle(el);
+                    if (rect.width > 2 && rect.height > 2 && style.display !== 'none' && style.visibility !== 'hidden') {
+                        const txt = (el.innerText || el.textContent || '').trim();
+                        if (txt && !opts.some(o => o.text === txt) && txt.length < 120) {
+                            opts.push({
+                                text: txt,
+                                x: Math.round(rect.left + rect.width / 2),
+                                y: Math.round(rect.top + rect.height / 2)
+                            });
+                        }
+                    }
+                }
+                if (opts.length > 0) break;
+            }
+            return opts;
+        }""")
+
+        candidate_texts = [o["text"] for o in rendered_options] if rendered_options else field.options
+
+        if candidate_texts:
+            chosen_opt = self._choose_dropdown_option_with_llm(prompt, user_answer, candidate_texts)
+            if chosen_opt:
+                opt_coords = next((o for o in rendered_options if o["text"].lower() == chosen_opt.lower()), None)
+                if opt_coords:
+                    self._hands.click_coords(page, opt_coords["x"], opt_coords["y"], label=f"Select: {chosen_opt[:12]}")
+                    page.wait_for_timeout(250)
+                    return True
+                elif field.is_searchable:
+                    page.keyboard.press("Enter")
+                    page.wait_for_timeout(250)
+                    return True
+
+        if field.is_searchable:
+            page.keyboard.press("Enter")
+            page.wait_for_timeout(250)
+            return True
+
+        return False
+
+    def _find_submit_button_coords(self, page) -> Optional[tuple[float, float, str]]:
+        """Finds primary submit button coordinates on screen visually."""
+        fields = scan_visual_form(page)
+        buttons = [f for f in fields if f.field_type == "button"]
+        for b in buttons:
+            txt = b.label.lower()
+            if any(w in txt for w in ("submit application", "submit", "apply now", "complete application")):
+                if not any(auth in txt for auth in ("linkedin", "indeed", "google", "newsletter", "subscribe")):
+                    return (b.center_x, b.center_y, b.label)
+
+        submit_btn = self._find_submit_button(page)
+        if submit_btn:
+            try:
+                box = submit_btn.bounding_box()
+                if box:
+                    return (box["x"] + box["width"] / 2, box["y"] + box["height"] / 2, "Submit")
+            except Exception:
+                pass
+        return None
 
     def apply(self, job_id: int, dry_run: bool = True, wait_for_human: Optional[bool] = None) -> ApplicantOutcome:
         job = self._storage.get_job(job_id)
@@ -818,8 +1021,12 @@ class Applicant:
                     else:
                         return ApplicantOutcome(status="blocked", detail=detail, job_id=job_id)
 
-                # Locate fields; if none found, check for an "Apply" button to open the form
-                fields = extract_form_fields(page)
+                # Locate fields via human-like visual search & scroll
+                self._find_and_scroll_to_form(page)
+                visual_fields = scan_visual_form(page)
+                input_fields = [f for f in visual_fields if f.field_type in ("text", "textarea", "file", "dropdown", "radio", "checkbox")]
+                fields = input_fields if input_fields else extract_form_fields(page)
+
                 if len(fields) == 0:
                     apply_btn = page.locator(
                         "a:has-text('Apply for this job'), button:has-text('Apply for this job'), "
@@ -832,7 +1039,9 @@ class Applicant:
                         self._hands.click_element(page, apply_btn, label="Clicking Apply...")
                         page.wait_for_timeout(3000)
                         self._hands.inject_cursor(page)
-                        fields = extract_form_fields(page)
+                        visual_fields = scan_visual_form(page)
+                        input_fields = [f for f in visual_fields if f.field_type in ("text", "textarea", "file", "dropdown", "radio", "checkbox")]
+                        fields = input_fields if input_fields else extract_form_fields(page)
                         self._log(f"Navigated to application form: {page.url} ({len(fields)} fields detected)")
                         self._storage.add_journey_step(
                             job_id=job_id,
@@ -868,7 +1077,9 @@ class Applicant:
 
                     if should_wait and not self._headless:
                         if self._wait_for_block_resolution(page, job_id, block):
-                            fields = extract_form_fields(page)
+                            visual_fields = scan_visual_form(page)
+                            input_fields = [f for f in visual_fields if f.field_type in ("text", "textarea", "file", "dropdown", "radio", "checkbox")]
+                            fields = input_fields if input_fields else extract_form_fields(page)
                         else:
                             return ApplicantOutcome(status="blocked", detail=detail, job_id=job_id)
                     else:
@@ -878,9 +1089,14 @@ class Applicant:
                 self._log(f"Detected {len(fields)} interactive form fields.")
 
                 for field in fields:
-                    prompt = normalize_field_prompt(field)
+                    prompt = normalize_visual_label(field.label) if hasattr(field, "label") else normalize_field_prompt(field)
+                    if not prompt:
+                        prompt = getattr(field, "label", "") or getattr(field, "name", "") or getattr(field, "placeholder", "")
                     if not prompt:
                         continue
+
+                    f_type = getattr(field, "field_type", None) or getattr(field, "input_type", "")
+                    f_tag = getattr(field, "tag", "")
 
                     try:
                         # First: Check if the user already filled this field directly into Chrome!
@@ -896,17 +1112,19 @@ class Applicant:
                                 agent="BrowserApplicant",
                                 status="success",
                                 summary=f"User already filled '{field.label or prompt}': '{existing_val}'",
-                                details={"field": prompt, "value": existing_val, "type": field.input_type},
+                                details={"field": prompt, "value": existing_val, "type": f_type},
                             )
                             continue
 
                         # 1. File upload (Resume)
-                        if field.input_type == "file":
+                        if f_type == "file":
                             resume_path = self._find_resume_pdf()
                             if resume_path:
                                 self._log(f"Uploading resume: {resume_path.name}")
                                 self._action_notify("Attaching", "Resume PDF", resume_path.name)
-                                page.locator(field.selector).first.set_input_files(str(resume_path))
+                                sel = getattr(field, "selector", "")
+                                loc = page.locator(sel if sel else "input[type='file']").first
+                                loc.set_input_files(str(resume_path))
                                 page.wait_for_timeout(2000)
                                 self._storage.add_journey_step(
                                     job_id=job_id,
@@ -916,7 +1134,7 @@ class Applicant:
                                     summary=f"Attached resume PDF: {resume_path.name}",
                                     details={"path": str(resume_path), "field": prompt},
                                 )
-                            elif field.is_required:
+                            elif getattr(field, "is_required", False):
                                 detail = "Application requires a resume PDF, but none is uploaded in profile/resumes/"
                                 self._log(f"BLOCKED: {detail}")
                                 screenshot = self._capture_screenshot(page, job_id, "no_resume")
@@ -947,16 +1165,17 @@ class Applicant:
                             continue
 
                         # 2. Radio Button Group
-                        if field.input_type == "radio":
+                        if f_type == "radio":
                             res = self._resolver.resolve(prompt)
                             chosen_opt = None
+                            options = getattr(field, "options", [])
                             if res.answer:
-                                chosen_opt = find_best_select_option(field.options, res.answer)
+                                chosen_opt = find_best_select_option(options, res.answer)
 
                             # If required and no direct answer, try graceful decline/prefer not to disclose option
-                            if not chosen_opt and field.is_required:
+                            if not chosen_opt and getattr(field, "is_required", False):
                                 for fallback_label in ("Prefer not to disclose", "Decline to state", "Decline", "Not Applicable", "Others"):
-                                    chosen_opt = find_best_select_option(field.options, fallback_label)
+                                    chosen_opt = find_best_select_option(options, fallback_label)
                                     if chosen_opt:
                                         break
 
@@ -964,9 +1183,36 @@ class Applicant:
                                 self._log(f"Selecting radio for '{field.label or prompt}': {chosen_opt}")
                                 self._resolve_notify(prompt, chosen_opt, res.source)
                                 self._action_notify("Selecting", field.label or prompt, f"Radio: {chosen_opt}")
-                                r_loc = page.locator(f"input[type='radio'][name='{field.name}'][value='{chosen_opt}']").first
-                                target_loc = r_loc if r_loc.count() > 0 else page.locator(f"label:has-text('{chosen_opt}')").first
-                                self._hands.click_element(page, target_loc, label=f"Select: {chosen_opt}")
+
+                                # Visually find coordinate of chosen radio option
+                                f_name = getattr(field, "name", "")
+                                coords = page.evaluate("""(data) => {
+                                    const inputs = Array.from(document.querySelectorAll('input[type="radio"]'));
+                                    for (const inp of inputs) {
+                                        if (data.name && inp.name !== data.name) continue;
+                                        const val = inp.value || '';
+                                        const parent = inp.closest('label');
+                                        const parentText = parent ? (parent.innerText || '') : '';
+                                        const idLabel = inp.id ? (document.querySelector(`label[for="${CSS.escape(inp.id)}"]`)?.innerText || '') : '';
+                                        const text = (val + ' ' + parentText + ' ' + idLabel).toLowerCase();
+                                        if (text.includes(data.chosen.toLowerCase())) {
+                                            const target = parent || inp;
+                                            const rect = target.getBoundingClientRect();
+                                            return { x: Math.round(rect.left + rect.width / 2), y: Math.round(rect.top + rect.height / 2) };
+                                        }
+                                    }
+                                    return null;
+                                }""", {"name": f_name, "chosen": chosen_opt})
+
+                                if coords:
+                                    self._hands.click_coords(page, coords["x"], coords["y"], label=f"Select: {chosen_opt[:12]}")
+                                elif getattr(field, "center_x", None) and getattr(field, "center_y", None):
+                                    self._hands.click_coords(page, field.center_x, field.center_y, label=f"Select: {chosen_opt[:12]}")
+                                else:
+                                    r_loc = page.locator(f"input[type='radio'][name='{f_name}'][value='{chosen_opt}']").first
+                                    target_loc = r_loc if r_loc.count() > 0 else page.locator(f"label:has-text('{chosen_opt}')").first
+                                    self._hands.click_element(page, target_loc, label=f"Select: {chosen_opt}")
+
                                 page.wait_for_timeout(300)
                                 self._storage.add_journey_step(
                                     job_id=job_id,
@@ -976,7 +1222,7 @@ class Applicant:
                                     summary=f"Selected radio '{field.label or prompt}': {chosen_opt}",
                                     details={"field": prompt, "value": chosen_opt, "type": "radio"},
                                 )
-                            elif field.is_required and (res.blocked_reason or (res.needs_review and not res.answer)):
+                            elif getattr(field, "is_required", False) and (res.blocked_reason or (res.needs_review and not res.answer)):
                                 if not should_wait or self._headless:
                                     return self._handle_blocked_question(page, job_id, prompt, should_wait=False)
                                 resolved_val = self._wait_for_question_resolution(page, job_id, field, prompt)
@@ -985,14 +1231,17 @@ class Applicant:
                             continue
 
                         # 3. Checkbox
-                        if field.input_type == "checkbox":
+                        if f_type == "checkbox":
                             res = self._resolver.resolve(prompt)
                             if res.answer and res.answer.lower() in ("yes", "true", "agree", "accept", "1"):
                                 self._log(f"Checking box '{field.label or prompt}'")
                                 self._resolve_notify(prompt, res.answer, res.source)
                                 self._action_notify("Checking", field.label or prompt, "Checkbox")
-                                cb_loc = page.locator(field.selector).first
-                                self._hands.click_element(page, cb_loc, label="Checking box")
+                                if getattr(field, "center_x", None) and getattr(field, "center_y", None):
+                                    self._hands.click_coords(page, field.center_x, field.center_y, label="Check box")
+                                else:
+                                    cb_loc = page.locator(getattr(field, "selector", "input[type='checkbox']")).first
+                                    self._hands.click_element(page, cb_loc, label="Checking box")
                                 self._storage.add_journey_step(
                                     job_id=job_id,
                                     step="field_input",
@@ -1004,25 +1253,36 @@ class Applicant:
                             continue
 
                         # 4. Dropdown / Select
-                        if field.tag == "select":
+                        if f_type == "dropdown" or f_tag == "select":
                             res = self._resolver.resolve(prompt)
                             if res.answer:
-                                opt = find_best_select_option(field.options, res.answer)
-                                if opt:
-                                    self._log(f"Selecting dropdown '{field.label or prompt}': {opt}")
-                                    self._resolve_notify(prompt, opt, res.source)
-                                    self._action_notify("Selecting", field.label or prompt, f"Dropdown: {opt}")
-                                    page.locator(field.selector).first.select_option(label=opt)
+                                self._log(f"Selecting dropdown '{field.label or prompt}': {res.answer}")
+                                self._resolve_notify(prompt, res.answer, res.source)
+                                self._action_notify("Selecting", field.label or prompt, f"Dropdown: {res.answer}")
+
+                                # Visual selection via physical coordinates
+                                selected = False
+                                if getattr(field, "center_x", None) and getattr(field, "center_y", None):
+                                    selected = self._select_dropdown_visually(page, field, prompt, res.answer)
+
+                                if not selected:
+                                    # Fallback to option selection if native <select>
+                                    opt = find_best_select_option(getattr(field, "options", []), res.answer)
+                                    if opt and getattr(field, "selector", ""):
+                                        page.locator(field.selector).first.select_option(label=opt)
+                                        selected = True
+
+                                if selected:
                                     page.wait_for_timeout(300)
                                     self._storage.add_journey_step(
                                         job_id=job_id,
                                         step="field_input",
                                         agent="BrowserApplicant",
                                         status="success",
-                                        summary=f"Selected dropdown '{field.label or prompt}': {opt}",
-                                        details={"field": prompt, "value": opt, "type": "select"},
+                                        summary=f"Selected dropdown '{field.label or prompt}': {res.answer}",
+                                        details={"field": prompt, "value": res.answer, "type": "select"},
                                     )
-                            elif field.is_required and (res.blocked_reason or (res.needs_review and not res.answer)):
+                            elif getattr(field, "is_required", False) and (res.blocked_reason or (res.needs_review and not res.answer)):
                                 if not should_wait or self._headless:
                                     return self._handle_blocked_question(page, job_id, prompt, should_wait=False)
                                 resolved_val = self._wait_for_question_resolution(page, job_id, field, prompt)
@@ -1036,8 +1296,13 @@ class Applicant:
                             self._log(f"Filled '{field.label or prompt}': {res.answer[:30]}...")
                             self._resolve_notify(prompt, res.answer, res.source)
                             self._action_notify("Typing", field.label or prompt, f"Value: {res.answer[:20]}...")
-                            loc = page.locator(field.selector).first
-                            self._hands.type_into_element(page, loc, res.answer, label=f"Typing {prompt[:12]}...")
+
+                            if getattr(field, "center_x", None) and getattr(field, "center_y", None):
+                                self._hands.clear_and_type(page, field.center_x, field.center_y, res.answer, label=f"Typing {prompt[:12]}...")
+                            else:
+                                loc = page.locator(getattr(field, "selector", "input")).first
+                                self._hands.type_into_element(page, loc, res.answer, label=f"Typing {prompt[:12]}...")
+
                             page.wait_for_timeout(200 if not self._headless else 50)
                             self._storage.add_journey_step(
                                 job_id=job_id,
@@ -1045,9 +1310,9 @@ class Applicant:
                                 agent="BrowserApplicant",
                                 status="success",
                                 summary=f"Filled field '{field.label or prompt}'",
-                                details={"field": prompt, "value": res.answer[:50], "source": res.source, "type": field.input_type},
+                                details={"field": prompt, "value": res.answer[:50], "source": res.source, "type": f_type},
                             )
-                        elif field.is_required and (res.blocked_reason or (res.needs_review and not res.answer)):
+                        elif getattr(field, "is_required", False) and (res.blocked_reason or (res.needs_review and not res.answer)):
                             if not should_wait or self._headless:
                                 return self._handle_blocked_question(page, job_id, prompt, should_wait=False)
                             resolved_val = self._wait_for_question_resolution(page, job_id, field, prompt)
@@ -1079,8 +1344,18 @@ class Applicant:
                 # Submit Application & Verified Webpage Response
                 # -------------------------------------------------------------
                 self._log("Locating submit button...")
-                submit_btn = self._find_submit_button(page)
-                if not submit_btn:
+                sub_coords = self._find_submit_button_coords(page)
+                if not sub_coords:
+                    submit_btn = self._find_submit_button(page)
+                    if submit_btn:
+                        try:
+                            box = submit_btn.bounding_box()
+                            if box:
+                                sub_coords = (box["x"] + box["width"] / 2, box["y"] + box["height"] / 2, "Submit")
+                        except Exception:
+                            pass
+
+                if not sub_coords:
                     detail = "Form filled, but could not locate submit button."
                     self._log(detail)
                     self._storage.add_journey_step(
@@ -1093,16 +1368,12 @@ class Applicant:
                     self._keep_browser_open_for_inspection(page, seconds=15)
                     return ApplicantOutcome(status="ready_to_submit", detail=detail, job_id=job_id)
 
-                self._action_notify("Submitting", "Submit Button", "Clicking submit...")
-                self._log("Submitting application...")
+                sub_x, sub_y, sub_label = sub_coords
+                self._action_notify("Submitting", "Submit Button", f"Clicking {sub_label}...")
+                self._log(f"Submitting application via visual coordinates ({sub_x}, {sub_y})...")
                 initial_url = page.url
 
-                try:
-                    submit_btn.scroll_into_view_if_needed(timeout=3000)
-                except Exception:
-                    pass
-
-                self._hands.click_element(page, submit_btn, label="Submitting Application...")
+                self._hands.click_coords(page, sub_x, sub_y, label=f"Submit: {sub_label[:12]}")
                 self._log("Waiting for webpage response (success/error verification)...")
 
                 sub_status, sub_msg = self._wait_for_submission_response(page, initial_url, timeout_seconds=self._submission_timeout)

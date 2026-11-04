@@ -63,3 +63,45 @@ def test_browser_hands_headless_execution():
         assert input_el.input_value() == "Hello World"
 
         browser.close()
+
+
+def test_browser_hands_coordinate_methods():
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True, channel="chrome")
+        page = browser.new_page()
+        page.set_content("""
+        <html>
+        <body style="margin: 0; padding: 20px;">
+            <input id="coord-input" type="text" style="width: 200px; height: 30px; display: block;" />
+            <button id="coord-btn" style="width: 100px; height: 30px; display: block; margin-top: 10px;"
+                    onclick="document.getElementById('coord-input').value = 'btn_clicked'">Press</button>
+        </body>
+        </html>
+        """)
+
+        hands = BrowserHands(enabled=True)
+
+        # Get button bounding box
+        btn_box = page.locator("#coord-btn").bounding_box()
+        bx = btn_box["x"] + btn_box["width"] / 2
+        by = btn_box["y"] + btn_box["height"] / 2
+
+        # 1. Click via raw physical coordinates
+        hands.click_coords(page, bx, by, label="Clicking Button")
+        assert page.locator("#coord-input").input_value() == "btn_clicked"
+
+        # 2. Focus input via raw coordinates and clear & type
+        inp_box = page.locator("#coord-input").bounding_box()
+        ix = inp_box["x"] + inp_box["width"] / 2
+        iy = inp_box["y"] + inp_box["height"] / 2
+
+        hands.clear_and_type(page, ix, iy, "Typed Visually")
+        assert page.locator("#coord-input").input_value() == "Typed Visually"
+
+        # 3. Test scroll wheel
+        hands.scroll_wheel(page, delta_y=200, steps=4)
+
+        browser.close()
+

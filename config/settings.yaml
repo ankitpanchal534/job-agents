@@ -61,7 +61,7 @@ llm:
       max_tokens: 800
     vision:
       what: Read screenshots (forms, confirmation pages)
-      models: { local: "qwen2.5-coder-7b-8k:latest", openai: "gpt-4o", groq: "meta-llama/llama-4-scout-17b-16e-instruct", huggingface: "Qwen/Qwen3-VL-30B-A3B-Instruct" }
+      models: { local: "minicpm-v:latest", openai: "gpt-4o", groq: "meta-llama/llama-4-scout-17b-16e-instruct", huggingface: "Qwen/Qwen3-VL-30B-A3B-Instruct" }
       provider: null
       temperature: 0.0
       max_tokens: 800

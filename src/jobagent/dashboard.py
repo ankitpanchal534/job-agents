@@ -477,6 +477,7 @@ def main() -> None:
                             user_data_dir=chosen_user_data_dir,
                             cdp_url=chosen_cdp_url,
                             profile_directory=profile_name_input.strip() or "jobagent",
+                            llm=client,
                         )
 
                         outcome = applicant.apply(job_id=job.id, dry_run=dry_run, wait_for_human=wait_for_human)
@@ -525,6 +526,7 @@ def main() -> None:
                                     on_log=st.toast,
                                     user_data_dir="data/chrome_profile",
                                     profile_directory="jobagent",
+                                    llm=client,
                                 )
                                 app_res = app.apply(job_id=j.id, dry_run=False, wait_for_human=True)
                                 st.info(f"Result: {app_res.status.upper()} - {app_res.detail}")

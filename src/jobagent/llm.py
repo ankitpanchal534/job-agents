@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import base64
 import json
 import os
 import urllib.error
 import urllib.request
-from typing import Mapping, Optional
+from pathlib import Path
+from typing import Any, Mapping, Optional
 
 from jobagent.config import Settings, resolve_task
 
@@ -22,11 +24,23 @@ class ChatClient:
         self._env = os.environ if env is None else env
         self._timeout = timeout
 
-    def complete(self, task: str, system: str, user: str) -> str:
+    def complete(self, task: str, system: str, user: str, image_path: Optional[str | Path] = None) -> str:
         resolved = resolve_task(self._settings, task)
+
+        user_content: Any = user
+        if image_path:
+            p = Path(image_path)
+            if p.is_file():
+                encoded = base64.b64encode(p.read_bytes()).decode("utf-8")
+                mime = "image/png" if p.suffix.lower() == ".png" else "image/jpeg"
+                user_content = [
+                    {"type": "text", "text": user},
+                    {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{encoded}"}},
+                ]
+
         body = {
             "model": resolved.model,
-            "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+            "messages": [{"role": "system", "content": system}, {"role": "user", "content": user_content}],
             "temperature": resolved.temperature,
             "max_tokens": resolved.max_tokens,
         }

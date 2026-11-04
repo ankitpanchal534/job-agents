@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import random
+import sys
 import time
 from typing import Optional, Any
 
@@ -267,3 +268,111 @@ class BrowserHands:
             time.sleep(delay)
 
         self.set_label(page, "")
+
+    def click_coords(self, page: Any, x: float, y: float, label: str = "Clicking...") -> None:
+        """Smoothly moves cursor to physical coordinates (x, y), shows ripple, and clicks."""
+        if not self.enabled:
+            try:
+                page.mouse.click(x, y)
+            except Exception:
+                pass
+            return
+
+        self.inject_cursor(page)
+        self.set_label(page, label)
+        self.move_to(page, x, y)
+
+        # Trigger visual ripple
+        try:
+            page.evaluate(
+                """([x, y]) => {
+                    const r = document.createElement('div');
+                    r.className = 'jobagent-click-ripple';
+                    r.style.transform = `translate(${x}px, ${y}px)`;
+                    document.body.appendChild(r);
+                    setTimeout(() => r.remove(), 500);
+                }""",
+                [x, y],
+            )
+        except Exception:
+            pass
+
+        try:
+            page.mouse.click(x, y)
+        except Exception:
+            pass
+
+        time.sleep(0.06)
+        self.set_label(page, "")
+
+    def type_text(
+        self,
+        page: Any,
+        text: str,
+        label: str = "Typing...",
+        delay_range: tuple[float, float] = (0.02, 0.05),
+    ) -> None:
+        """Types text via physical keyboard events with realistic human timing."""
+        if not self.enabled:
+            page.keyboard.type(text)
+            return
+
+        self.inject_cursor(page)
+        self.set_label(page, label)
+        for char in text:
+            try:
+                page.keyboard.type(char)
+            except Exception:
+                break
+            delay = random.uniform(delay_range[0], delay_range[1])
+            if char in (" ", ",", ".", "@", "-", "_"):
+                delay += 0.03
+            time.sleep(delay)
+
+        self.set_label(page, "")
+
+    def clear_and_type(
+        self,
+        page: Any,
+        x: float,
+        y: float,
+        text: str,
+        label: str = "Typing...",
+    ) -> None:
+        """Moves to coordinates (x, y), focuses with physical click, selects all, clears, and types."""
+        self.click_coords(page, x, y, label="Focusing...")
+        time.sleep(0.05)
+
+        # Select all and delete: Meta+A on macOS, Control+A on Windows/Linux
+        mod_key = "Meta" if sys.platform == "darwin" else "Control"
+        try:
+            page.keyboard.down(mod_key)
+            page.keyboard.press("KeyA")
+            page.keyboard.up(mod_key)
+            page.keyboard.press("Backspace")
+        except Exception:
+            pass
+
+        time.sleep(0.04)
+        self.type_text(page, text, label=label)
+
+    def scroll_wheel(
+        self,
+        page: Any,
+        delta_y: float = 500,
+        steps: int = 8,
+        pause: float = 0.02,
+    ) -> None:
+        """Performs smooth human-like mouse wheel scrolling."""
+        if steps <= 1:
+            page.mouse.wheel(0, delta_y)
+            return
+
+        step_y = delta_y / steps
+        for _ in range(steps):
+            try:
+                page.mouse.wheel(0, step_y)
+            except Exception:
+                break
+            time.sleep(pause)
+

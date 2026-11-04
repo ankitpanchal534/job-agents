@@ -21,6 +21,35 @@ The foundation plan (P0 to P5) is built. The detailed, ordered list is in `HANDO
 
 ## Where I stopped
 
+Pure Vision-Guided Form Interaction, Coordinate-Based Agent Hands & minicpm-v Vision Integration:
+- `src/jobagent/browser_hands.py`:
+  - Added physical coordinate interaction methods:
+    - `click_coords(page, x, y, label)`: human bezier curve mouse move, hover, micro-pause, and physical mouse press/up.
+    - `type_text(page, text, label)`: human jitter keyboard typing with keydown/keyup events.
+    - `clear_and_type(page, x, y, text, label)`: physical coordinate click, OS-aware select all (`Meta+A` on Darwin, `Control+A` on Windows/Linux), backspace clear, and natural human typing.
+    - `scroll_wheel(page, delta_y, steps, pause)`: natural human mouse wheel scrolling in incremental steps.
+- `src/jobagent/visual_inspector.py`:
+  - Implemented `scan_visual_form(page) -> list[VisualField]`: maps visibly rendered form elements directly to on-screen physical center coordinates `(center_x, center_y)`, dimensions, field types (`text`, `textarea`, `dropdown`, `radio`, `checkbox`, `file`, `button`), and visual labels.
+  - Implemented `normalize_visual_label`: strips required markers (`*`, `✱`, `•`) and whitespace.
+- `src/jobagent/llm.py`:
+  - Added multimodal vision input support to `ChatClient.complete(task, system, user, image_path=...)`, encoding screenshots to base64 data URLs for Ollama/OpenAI vision models.
+- `src/jobagent/applicant.py`:
+  - `_find_and_scroll_to_form(page)`: natural mouse wheel scrolling looking for form fields and Apply buttons, preventing false positives on newsletter or cookie banners.
+  - `_choose_dropdown_option_with_llm(question, user_answer, options)`: passes available dropdown options and user's intent to LLM to select the exact string match.
+  - `_select_dropdown_visually(page, field, prompt, user_answer)`: clicks dropdown coordinates, types into combobox if searchable, reads rendered DOM option coordinates, queries LLM for matching option, and clicks physical option coordinates on screen.
+  - `_find_submit_button_coords(page)`: locates primary submit button coordinates on screen and clicks via `click_coords`.
+  - Converted form filling loop from DOM locator manipulation (`locator.fill`, `locator.click`, `locator.select_option`) to pure physical coordinate clicks and typing, while preserving `set_input_files` for resume PDF to avoid macOS Finder freezing.
+  - Wired `llm=client` across `Applicant`, `cli.py`, and `dashboard.py`.
+- Ollama & Config:
+  - Installed `minicpm-v:latest` (5.5 GB) into Ollama.
+  - Updated `config/settings.yaml` under `tasks.vision.models.local` to `"minicpm-v:latest"`.
+- Tests:
+  - `tests/test_visual_inspector.py`: verifies visual scanning, coordinate extraction, and label normalization.
+  - `tests/test_browser_hands.py`: verifies physical coordinate clicks, clear/typing, and wheel scrolling.
+  - `tests/test_llm.py`: verifies multimodal payload generation.
+  - `tests/test_applicant.py`: added `test_applicant_visual_mode_scroll_and_custom_dropdown`.
+  - All 276 tests passing (`uv run pytest` in 81s) and `check-config` clean.
+
 Verified Form Submission, Post-Submission Screenshot & ntfy Alerting:
 - `src/jobagent/applicant.py`:
   - Added strict submission response verification loop (`_wait_for_submission_response` and `_check_submission_response`) that polls the page after submit button click:

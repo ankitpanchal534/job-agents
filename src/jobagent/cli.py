@@ -406,6 +406,7 @@ def _apply(args, llm, env: Mapping[str, str], channels) -> int:
         user_data_dir=user_data_dir,
         cdp_url=args.cdp_url,
         profile_directory=args.profile_directory,
+        llm=client,
     )
 
     outcome = applicant.apply(job_id=job_id, dry_run=args.dry_run, wait_for_human=not args.no_wait)
