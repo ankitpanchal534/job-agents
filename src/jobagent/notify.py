@@ -212,3 +212,36 @@ class Notifier:
         if sent:
             self._storage.mark_block_notified(block.id)
         return NotifyReport(sent=sent, failed=failed, suppressed=False)
+
+    def notify_applied(
+        self,
+        job_id: int,
+        screenshot_path: Optional[str] = None,
+        custom_message: Optional[str] = None,
+    ) -> NotifyReport:
+        job = self._storage.get_job(job_id)
+        if not job:
+            return NotifyReport(sent=[], failed={"error": f"Job #{job_id} not found"}, suppressed=False)
+
+        title = "Job Applied"
+        job_info = f"{job.title or 'Application'} at {job.company or 'Company'}"
+        message = custom_message or f"Job Applied: {job_info}\nLink: {job.url}"
+
+        notification = Notification(
+            title=title,
+            message=message,
+            url=job.url,
+            attachment=screenshot_path,
+            priority="high",
+        )
+
+        sent: list[str] = []
+        failed: dict[str, str] = {}
+        for channel in self._channels:
+            try:
+                channel.send(notification)
+                sent.append(channel.name)
+            except NotifyError as error:
+                failed[channel.name] = str(error)
+        return NotifyReport(sent=sent, failed=failed, suppressed=False)
+

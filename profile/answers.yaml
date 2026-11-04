@@ -256,7 +256,7 @@ faq:
     tags: [location, relocation]
 
   - question: "Current location"
-    answer: "Gurgaon"
+    answer: "New Delhi, Delhi, India"
     tags: [location]
 
   - question: "Total Years of experience"

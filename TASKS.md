@@ -21,6 +21,23 @@ The foundation plan (P0 to P5) is built. The detailed, ordered list is in `HANDO
 
 ## Where I stopped
 
+Verified Form Submission, Post-Submission Screenshot & ntfy Alerting:
+- `src/jobagent/applicant.py`:
+  - Added strict submission response verification loop (`_wait_for_submission_response` and `_check_submission_response`) that polls the page after submit button click:
+    - Verifies URL redirection to confirmation routes (`/confirmation`, `/thanks`, `/submitted`, `/success`, `/applied`).
+    - Verifies in-page confirmation containers (`#application_confirmation`, `.application-confirmation`, `[data-qa='msg-submit-success']`) and headings ("Thank you for applying", "Application submitted", "Your application has been received").
+    - Verifies in-page validation errors and rejection banners (`.error-message`, `.input--error`, `[aria-invalid='true']`, "Please fill in this field", "This field is required", "Invalid email").
+    - Detects CAPTCHA challenges triggered upon submit.
+    - Captures post-submission screenshot of the confirmed screen (`submission_success`), validation error (`submission_error`), or unconfirmed state (`submission_unconfirmed`).
+    - Strictly forbids setting status to `"applied"` unless visual confirmation is confirmed on screen.
+    - Sends an ntfy notification with the message `"Job Applied"`, role/company, job URL, and attaches the submission screenshot.
+  - Added `_find_submit_button(page)` prioritizing primary submit controls and excluding third-party auth buttons ("Apply with LinkedIn", "Apply with Indeed").
+- `src/jobagent/notify.py`:
+  - Implemented `Notifier.notify_applied(job_id, screenshot_path, custom_message)` to send "Job Applied" notifications with job link and screenshot attachment via ntfy (and toast on Windows).
+- `tests/test_notify.py`: added `test_notify_applied_sends_alert_with_job_link_and_screenshot`.
+- `tests/test_applicant.py`: added `test_applicant_verified_submission_success_and_notifies`, `test_applicant_detects_submission_error_does_not_falsely_apply`, and `test_applicant_detects_unconfirmed_submission_does_not_falsely_apply`.
+- All 270 tests passing (`uv run pytest` in 63s) and `check-config` clean.
+
 Ghost Field Filtering, Visual Verification & Automated "jobagent" Profile Provisioning:
 - `src/jobagent/form_inspector.py`:
   - Filtered out non-interactive internal framework validation inputs (e.g. React-Select `tabindex="-1"`, `aria-hidden="true"` dummy inputs that triggered phantom `field 5` and `field 9` blocks).

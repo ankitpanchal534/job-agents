@@ -107,6 +107,7 @@ class Applicant:
         user_data_dir: Optional[Path | str] = None,
         cdp_url: Optional[str] = None,
         profile_directory: Optional[str] = "jobagent",
+        submission_timeout: float = 25.0,
     ):
         self._storage = storage
         self._resolver = resolver
@@ -123,6 +124,7 @@ class Applicant:
         self._user_data_dir = str(user_data_dir) if user_data_dir else None
         self._cdp_url = str(cdp_url) if cdp_url else None
         self._profile_directory = profile_directory
+        self._submission_timeout = submission_timeout
 
     def _log(self, message: str) -> None:
         self._on_log(message)
@@ -421,10 +423,265 @@ class Applicant:
                 )
                 return True
 
+            # 3. Check if submission succeeded while waiting on unconfirmed/error
+            if block.reason == "submit_unconfirmed":
+                res, res_msg = self._check_submission_response(page, block.page_url or "")
+                if res == "success":
+                    self._log(f"✓ Submission confirmation detected on screen ({res_msg})! Resuming...")
+                    self._storage.resume_job(job_id)
+                    self._storage.add_journey_step(
+                        job_id=job_id,
+                        step="block_resolved",
+                        agent="BrowserApplicant",
+                        status="success",
+                        summary=f"Submission confirmed in browser: {res_msg}",
+                        details={"block_id": block.id},
+                    )
+                    return True
+
             page.wait_for_timeout(1000)
 
         self._log(f"Timed out after {timeout_seconds}s waiting for human resolution.")
         return False
+
+    def _find_submit_button(self, page):
+        """Locates the primary submit button on the application form, avoiding auth/social buttons."""
+        submit_candidates = [
+            "button[type='submit']",
+            "input[type='submit']",
+            "button[data-qa='btn-submit']",
+            "#submit_app",
+            "#submit-btn",
+            "button:has-text('Submit application')",
+            "button:has-text('Submit Application')",
+            "button:has-text('Submit application now')",
+            "button:has-text('Submit')",
+            "input[value='Submit application']",
+            "input[value='Submit Application']",
+            "input[value='Submit']",
+            "form button:has-text('Apply')",
+        ]
+        for sel in submit_candidates:
+            try:
+                locator = page.locator(sel)
+                count = locator.count()
+                for i in range(count):
+                    el = locator.nth(i)
+                    if el.is_visible():
+                        txt = (el.inner_text() or el.get_attribute("value") or "").lower()
+                        # Avoid external social sign-in buttons (e.g. "Apply with LinkedIn")
+                        if any(auth in txt for auth in ("linkedin", "indeed", "google", "facebook", "seek")):
+                            continue
+                        return el
+            except Exception:
+                continue
+
+        # Fallback: any visible button containing 'apply' or 'submit' inside a form
+        try:
+            form_btns = page.locator("form button, form input[type='button'], form a.btn, form a.button")
+            for i in range(form_btns.count()):
+                el = form_btns.nth(i)
+                if el.is_visible():
+                    txt = (el.inner_text() or el.get_attribute("value") or "").lower()
+                    if ("submit" in txt or "apply" in txt) and not any(auth in txt for auth in ("linkedin", "indeed", "google")):
+                        return el
+        except Exception:
+            pass
+
+        return None
+
+    def _check_submission_response(self, page, initial_url: str) -> tuple[str, str]:
+        """Checks the page for submission outcome (success, error, pending, or unknown)."""
+        try:
+            current_url = page.url.lower()
+            init_url_lower = initial_url.lower()
+
+            # 1. URL navigation to confirmation page
+            url_success_keywords = [
+                "/confirmation",
+                "/confirmed",
+                "/thanks",
+                "/thank-you",
+                "/thank_you",
+                "/submitted",
+                "/success",
+                "/complete",
+                "/applied",
+            ]
+            if current_url != init_url_lower and any(kw in current_url for kw in url_success_keywords):
+                return ("success", f"Page navigated to confirmation URL: {page.url}")
+
+            # 2. Check for explicit success containers in DOM
+            success_selectors = [
+                "#application_confirmation",
+                ".application-confirmation",
+                ".submitted-message",
+                ".submission-success",
+                "[data-qa='msg-submit-success']",
+                ".success-message",
+                ".application-success",
+            ]
+            for sel in success_selectors:
+                try:
+                    loc = page.locator(sel).first
+                    if loc.is_visible():
+                        txt = loc.inner_text().strip()
+                        return ("success", f"Confirmation container visible: {txt[:120]}")
+                except Exception:
+                    pass
+
+            # 3. Check for visible success phrases in headings and content
+            success_phrases = [
+                "thank you for applying",
+                "thanks for applying",
+                "application submitted",
+                "application has been submitted",
+                "your application was submitted",
+                "your application has been received",
+                "we've received your application",
+                "we have received your application",
+                "application received",
+                "submission received",
+                "successfully submitted",
+                "applied successfully",
+                "thank you for your interest",
+                "thanks for your interest",
+                "application complete",
+            ]
+            found_success = page.evaluate("""(phrases) => {
+                const candidates = Array.from(document.querySelectorAll('h1, h2, h3, h4, [role="alert"], [role="status"], .alert, p, div'));
+                for (const el of candidates) {
+                    const rect = el.getBoundingClientRect();
+                    if (rect.width === 0 || rect.height === 0) continue;
+                    const style = window.getComputedStyle(el);
+                    if (style.display === 'none' || style.visibility === 'hidden') continue;
+                    
+                    const text = (el.innerText || '').toLowerCase();
+                    for (const phrase of phrases) {
+                        if (text.includes(phrase)) {
+                            return el.innerText.trim().slice(0, 150);
+                        }
+                    }
+                }
+                return null;
+            }""", success_phrases)
+
+            if found_success:
+                return ("success", f"Success message found: {found_success}")
+
+            # 4. Check for visible submission validation / error messages
+            error_phrases = [
+                "please fill in this field",
+                "please fill out this field",
+                "this field is required",
+                "is required",
+                "invalid email",
+                "please enter a valid",
+                "please fix the errors",
+                "error submitting application",
+                "there was an error submitting",
+                "there was a problem submitting",
+                "submission failed",
+                "something went wrong",
+                "could not submit",
+            ]
+            found_errors = page.evaluate("""(phrases) => {
+                const errors = [];
+                // Selector-based error containers
+                const errorEls = Array.from(document.querySelectorAll(
+                    '.error-message, .error_message, .error-summary, .alert-danger, .flash-error, ' +
+                    '.toast-error, .form-error, .field-error, .input--error, .validation-error, ' +
+                    '[aria-invalid="true"], [role="alert"].error, span.error, div.error, p.error, .has-error'
+                ));
+                for (const el of errorEls) {
+                    const rect = el.getBoundingClientRect();
+                    if (rect.width === 0 || rect.height === 0) continue;
+                    const style = window.getComputedStyle(el);
+                    if (style.display === 'none' || style.visibility === 'hidden') continue;
+                    const txt = (el.innerText || '').trim();
+                    if (txt && !errors.includes(txt) && txt.length < 200) {
+                        errors.push(txt);
+                    }
+                }
+                
+                // Visible phrase matching
+                if (errors.length === 0) {
+                    const textEls = Array.from(document.querySelectorAll('p, span, div, label, [role="alert"]'));
+                    for (const el of textEls) {
+                        const rect = el.getBoundingClientRect();
+                        if (rect.width === 0 || rect.height === 0) continue;
+                        const style = window.getComputedStyle(el);
+                        if (style.display === 'none' || style.visibility === 'hidden') continue;
+                        const txt = (el.innerText || '').toLowerCase();
+                        for (const phrase of phrases) {
+                            if (txt.includes(phrase) && el.innerText.trim().length < 150) {
+                                const originalTxt = el.innerText.trim();
+                                if (!errors.includes(originalTxt)) {
+                                    errors.push(originalTxt);
+                                }
+                            }
+                        }
+                    }
+                }
+                return errors;
+            }""", error_phrases)
+
+            if found_errors:
+                return ("error", "; ".join(found_errors))
+
+            # 5. Check if button is in loading / submitting state
+            is_submitting = page.evaluate("""() => {
+                const submitBtn = document.querySelector('button[type="submit"], input[type="submit"], button.submitting, [data-qa="btn-submit"]');
+                if (submitBtn) {
+                    if (submitBtn.disabled || submitBtn.getAttribute('aria-disabled') === 'true') return true;
+                    if (submitBtn.classList.contains('loading') || submitBtn.classList.contains('submitting') || submitBtn.classList.contains('spinner')) return true;
+                }
+                const spinners = document.querySelectorAll('.spinner, .loading-spinner, [role="progressbar"]');
+                for (const s of spinners) {
+                    const rect = s.getBoundingClientRect();
+                    if (rect.width > 0 && rect.height > 0) return true;
+                }
+                return false;
+            }""")
+            if is_submitting:
+                return ("pending", "Submission request in progress...")
+
+            return ("unknown", "Awaiting response...")
+        except Exception as exc:
+            return ("unknown", f"Error checking response: {exc}")
+
+    def _wait_for_submission_response(self, page, initial_url: str, timeout_seconds: float = 25.0) -> tuple[str, str]:
+        """Polls the page after submit button click to verify webpage response (success/error/captcha/timeout)."""
+        start_poll = time.time()
+        last_status = "unknown"
+        last_msg = "No response from submission"
+
+        while time.time() - start_poll < timeout_seconds:
+            if page.is_closed():
+                return ("error", "Browser window was closed before submission completed.")
+
+            if self._detect_captcha(page):
+                return ("captcha", "CAPTCHA challenge detected upon submission")
+
+            st_res, st_msg = self._check_submission_response(page, initial_url)
+            last_status = st_res
+            last_msg = st_msg
+
+            if st_res in ("success", "error"):
+                return (st_res, st_msg)
+
+            page.wait_for_timeout(1000)
+
+        # Timeout reached: if still unknown, verify if form is still present
+        try:
+            form_present = page.locator("form, button[type='submit'], input[type='submit']").first.is_visible()
+            if form_present:
+                return ("unconfirmed", "Form is still present on page; submission was not confirmed by the server.")
+        except Exception:
+            pass
+
+        return (last_status, last_msg)
+
 
     def apply(self, job_id: int, dry_run: bool = True, wait_for_human: Optional[bool] = None) -> ApplicantOutcome:
         job = self._storage.get_job(job_id)
@@ -818,28 +1075,12 @@ class Applicant:
                     self._keep_browser_open_for_inspection(page, seconds=30)
                     return ApplicantOutcome(status="ready_to_submit", detail=detail, job_id=job_id)
 
-                # Click Submit
-                self._log("Submitting application...")
-                submit_btn = page.locator("button[type='submit'], input[type='submit'], button:has-text('Submit'), button:has-text('Apply')").first
-                if submit_btn.is_visible():
-                    self._action_notify("Submitting", "Submit Button", "Submitting form...")
-                    self._hands.click_element(page, submit_btn, label="Submitting Application...")
-                    page.wait_for_timeout(3000)
-                    self._storage.set_status(job_id, "applied")
-                    detail = "Application submitted successfully."
-                    self._log(detail)
-                    self._status("applied", detail)
-                    self._storage.add_journey_step(
-                        job_id=job_id,
-                        step="submission",
-                        agent="BrowserApplicant",
-                        status="success",
-                        summary=detail,
-                        details={"dry_run": False},
-                    )
-                    self._keep_browser_open_for_inspection(page, seconds=10)
-                    return ApplicantOutcome(status="applied", detail=detail, job_id=job_id)
-                else:
+                # -------------------------------------------------------------
+                # Submit Application & Verified Webpage Response
+                # -------------------------------------------------------------
+                self._log("Locating submit button...")
+                submit_btn = self._find_submit_button(page)
+                if not submit_btn:
                     detail = "Form filled, but could not locate submit button."
                     self._log(detail)
                     self._storage.add_journey_step(
@@ -851,6 +1092,214 @@ class Applicant:
                     )
                     self._keep_browser_open_for_inspection(page, seconds=15)
                     return ApplicantOutcome(status="ready_to_submit", detail=detail, job_id=job_id)
+
+                self._action_notify("Submitting", "Submit Button", "Clicking submit...")
+                self._log("Submitting application...")
+                initial_url = page.url
+
+                try:
+                    submit_btn.scroll_into_view_if_needed(timeout=3000)
+                except Exception:
+                    pass
+
+                self._hands.click_element(page, submit_btn, label="Submitting Application...")
+                self._log("Waiting for webpage response (success/error verification)...")
+
+                sub_status, sub_msg = self._wait_for_submission_response(page, initial_url, timeout_seconds=self._submission_timeout)
+
+                if sub_status == "success":
+                    screenshot_path = self._capture_screenshot(page, job_id, "submission_success")
+                    detail = f"Application submitted successfully: {sub_msg}"
+                    self._log(f"✓ {detail}")
+                    self._storage.set_status(job_id, "applied")
+                    self._status("applied", detail)
+                    self._storage.add_journey_step(
+                        job_id=job_id,
+                        step="submission",
+                        agent="BrowserApplicant",
+                        status="success",
+                        summary=detail,
+                        details={
+                            "dry_run": False,
+                            "confirmation": sub_msg,
+                            "url": page.url,
+                            "screenshot": screenshot_path,
+                        },
+                    )
+
+                    if self._notifier:
+                        try:
+                            self._log("Sending 'Job Applied' alert via ntfy with screenshot and job link...")
+                            notif_report = self._notifier.notify_applied(
+                                job_id=job_id,
+                                screenshot_path=screenshot_path,
+                                custom_message=f"Job Applied: {job.title or 'Application'} at {job.company or 'Company'}\nURL: {job.url}",
+                            )
+                            if notif_report.sent:
+                                self._log(f"✓ Notification sent via {', '.join(notif_report.sent)}.")
+                            elif notif_report.failed:
+                                self._log(f"Warning: Notification failed on {notif_report.failed}")
+                        except Exception as notif_err:
+                            self._log(f"Warning: Could not send notification: {notif_err}")
+
+                    self._keep_browser_open_for_inspection(page, seconds=10)
+                    return ApplicantOutcome(status="applied", detail=detail, job_id=job_id)
+
+                elif sub_status == "error":
+                    screenshot_path = self._capture_screenshot(page, job_id, "submission_error")
+                    detail = f"Submission error on page: {sub_msg}"
+                    self._log(f"❌ {detail}")
+                    self._status("failed", detail)
+                    self._storage.add_journey_step(
+                        job_id=job_id,
+                        step="submission",
+                        agent="BrowserApplicant",
+                        status="failed",
+                        summary=detail,
+                        details={
+                            "dry_run": False,
+                            "error": sub_msg,
+                            "url": page.url,
+                            "screenshot": screenshot_path,
+                        },
+                    )
+
+                    if should_wait and not self._headless:
+                        block = self._storage.block_job(
+                            job_id=job_id,
+                            reason="submit_unconfirmed",
+                            detail=detail,
+                            page_url=page.url,
+                            screenshot_path=screenshot_path,
+                        )
+                        if self._notifier:
+                            self._notifier.notify_block(block)
+                        resolved = self._wait_for_block_resolution(page, job_id, block)
+                        if resolved:
+                            st_res, st_msg = self._check_submission_response(page, initial_url)
+                            if st_res == "success":
+                                succ_shot = self._capture_screenshot(page, job_id, "submission_success")
+                                s_detail = f"Application submitted after human resolution: {st_msg}"
+                                self._storage.set_status(job_id, "applied")
+                                self._status("applied", s_detail)
+                                self._storage.add_journey_step(
+                                    job_id=job_id,
+                                    step="submission",
+                                    agent="BrowserApplicant",
+                                    status="success",
+                                    summary=s_detail,
+                                    details={"url": page.url, "screenshot": succ_shot},
+                                )
+                                if self._notifier:
+                                    self._notifier.notify_applied(
+                                        job_id=job_id,
+                                        screenshot_path=succ_shot,
+                                        custom_message=f"Job Applied: {job.title or 'Application'} at {job.company or 'Company'}\nURL: {job.url}",
+                                    )
+                                self._keep_browser_open_for_inspection(page, seconds=10)
+                                return ApplicantOutcome(status="applied", detail=s_detail, job_id=job_id)
+
+                    return ApplicantOutcome(status="failed", detail=detail, job_id=job_id)
+
+                elif sub_status == "captcha":
+                    screenshot_path = self._capture_screenshot(page, job_id, "submission_captcha")
+                    detail = "Submission blocked by CAPTCHA challenge"
+                    self._log(f"BLOCKED: {detail}")
+                    self._status("blocked", detail)
+                    block = self._storage.block_job(
+                        job_id=job_id,
+                        reason="captcha",
+                        detail=detail,
+                        page_url=page.url,
+                        screenshot_path=screenshot_path,
+                    )
+                    if self._notifier:
+                        self._notifier.notify_block(block)
+
+                    if should_wait and not self._headless:
+                        resolved = self._wait_for_block_resolution(page, job_id, block)
+                        if resolved:
+                            st_res, st_msg = self._check_submission_response(page, initial_url)
+                            if st_res == "success":
+                                succ_shot = self._capture_screenshot(page, job_id, "submission_success")
+                                s_detail = f"Application submitted after solving CAPTCHA: {st_msg}"
+                                self._storage.set_status(job_id, "applied")
+                                self._status("applied", s_detail)
+                                self._storage.add_journey_step(
+                                    job_id=job_id,
+                                    step="submission",
+                                    agent="BrowserApplicant",
+                                    status="success",
+                                    summary=s_detail,
+                                    details={"url": page.url, "screenshot": succ_shot},
+                                )
+                                if self._notifier:
+                                    self._notifier.notify_applied(
+                                        job_id=job_id,
+                                        screenshot_path=succ_shot,
+                                        custom_message=f"Job Applied: {job.title or 'Application'} at {job.company or 'Company'}\nURL: {job.url}",
+                                    )
+                                self._keep_browser_open_for_inspection(page, seconds=10)
+                                return ApplicantOutcome(status="applied", detail=s_detail, job_id=job_id)
+                    return ApplicantOutcome(status="blocked", detail=detail, job_id=job_id)
+
+                else:  # unconfirmed / timeout
+                    screenshot_path = self._capture_screenshot(page, job_id, "submission_unconfirmed")
+                    detail = f"Submission could not be confirmed: {sub_msg}"
+                    self._log(f"⚠️ {detail}")
+                    self._status("ready_to_submit", detail)
+                    self._storage.add_journey_step(
+                        job_id=job_id,
+                        step="submission",
+                        agent="BrowserApplicant",
+                        status="warning",
+                        summary=detail,
+                        details={
+                            "dry_run": False,
+                            "unconfirmed_reason": sub_msg,
+                            "url": page.url,
+                            "screenshot": screenshot_path,
+                        },
+                    )
+
+                    if should_wait and not self._headless:
+                        block = self._storage.block_job(
+                            job_id=job_id,
+                            reason="submit_unconfirmed",
+                            detail=detail,
+                            page_url=page.url,
+                            screenshot_path=screenshot_path,
+                        )
+                        if self._notifier:
+                            self._notifier.notify_block(block)
+                        resolved = self._wait_for_block_resolution(page, job_id, block)
+                        if resolved:
+                            st_res, st_msg = self._check_submission_response(page, initial_url)
+                            if st_res == "success":
+                                succ_shot = self._capture_screenshot(page, job_id, "submission_success")
+                                s_detail = f"Application submitted after human confirmation: {st_msg}"
+                                self._storage.set_status(job_id, "applied")
+                                self._status("applied", s_detail)
+                                self._storage.add_journey_step(
+                                    job_id=job_id,
+                                    step="submission",
+                                    agent="BrowserApplicant",
+                                    status="success",
+                                    summary=s_detail,
+                                    details={"url": page.url, "screenshot": succ_shot},
+                                )
+                                if self._notifier:
+                                    self._notifier.notify_applied(
+                                        job_id=job_id,
+                                        screenshot_path=succ_shot,
+                                        custom_message=f"Job Applied: {job.title or 'Application'} at {job.company or 'Company'}\nURL: {job.url}",
+                                    )
+                                self._keep_browser_open_for_inspection(page, seconds=10)
+                                return ApplicantOutcome(status="applied", detail=s_detail, job_id=job_id)
+
+                    self._keep_browser_open_for_inspection(page, seconds=15)
+                    return ApplicantOutcome(status="ready_to_submit", detail=detail, job_id=job_id)
+
 
             except Exception as exc:
                 detail = f"Error during application: {exc}"

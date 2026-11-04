@@ -54,6 +54,28 @@ def test_a_block_sends_one_alert_with_the_job_link_and_screenshot(storage):
     assert storage.list_blocks()[0].notified_at is not None
 
 
+def test_notify_applied_sends_alert_with_job_link_and_screenshot(storage):
+    channel = FakeChannel()
+    job = storage.add_job("https://boards.greenhouse.io/acme/jobs/42")
+    storage.update_job(job.id, title="Staff Frontend Engineer", company="Acme Corp")
+
+    report = Notifier(storage, [channel]).notify_applied(
+        job_id=job.id,
+        screenshot_path="data/screenshots/submitted_42.png",
+    )
+
+    assert len(channel.sent) == 1
+    alert = channel.sent[0]
+    assert alert.title == "Job Applied"
+    assert "Job Applied" in alert.message
+    assert "Staff Frontend Engineer" in alert.message
+    assert "Acme Corp" in alert.message
+    assert alert.url == "https://boards.greenhouse.io/acme/jobs/42"
+    assert alert.attachment == "data/screenshots/submitted_42.png"
+    assert alert.priority == "high"
+    assert report.sent == ["fake"] and not report.suppressed
+
+
 def test_a_second_alert_for_the_same_problem_on_the_same_site_is_held_back_then_summarised(storage, clock):
     channel = FakeChannel()
     notifier = Notifier(storage, [channel], cooldown_minutes=15, clock=clock)
