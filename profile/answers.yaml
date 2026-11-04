@@ -302,3 +302,6 @@ faq:
   - question: "Expected Compensation (Yearly)"
     answer: "2500000"
     tags: [learned, compensation]
+  - question: "Location (City)"
+    answer: "Gurgaon"
+    tags: [learned, location]
