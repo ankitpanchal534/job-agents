@@ -165,10 +165,11 @@ def main() -> None:
         with st.expander("🌐 Chrome Profile & Session Settings", expanded=False):
             p_c1, p_c2 = st.columns([1, 1])
             with p_c1:
+                profile_name_input = st.text_input("Chrome Profile Name:", value="jobagent", help="Dedicated Chrome profile name (defaults to 'jobagent')")
                 profile_mode = st.selectbox(
                     "Chrome Session Mode:",
                     [
-                        "Persistent Agent Profile (Saves all logins & cookies)",
+                        f"Persistent '{profile_name_input}' Profile (Saves all logins & cookies)",
                         "Connect to Running Chrome (CDP Port 9222)",
                         "Temporary Guest / Incognito Profile",
                     ],
@@ -186,18 +187,17 @@ def main() -> None:
                 else:
                     cdp_input = ""
                     if "Persistent" in profile_mode:
-                        st.caption("📁 Profile directory: `data/chrome_profile`")
+                        st.caption(f"📁 Profile: `{profile_name_input}` stored in `data/chrome_profile`")
 
             if "Connect to Running" in profile_mode:
                 st.info(
                     "💡 **How to connect JobAgent directly to your open Chrome browser:**\n\n"
                     "1. Completely quit Chrome (`Cmd+Q` on Mac)\n"
                     "2. Start Chrome from Terminal with remote debugging:\n"
-                    "   ```bash\n"
-                    "   /Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome --remote-debugging-port=9222\n"
+                    f"   ```bash\n"
+                    f"   python -m jobagent chrome --profile-directory=\"{profile_name_input}\"\n"
                     "   ```\n"
-                    "   *(or run: `python -m jobagent chrome`)*\n"
-                    "3. JobAgent will now operate directly inside your active Chrome window with all your open tabs, history, and logins!"
+                    f"3. JobAgent will now operate directly inside your active Chrome window under the **'{profile_name_input}'** profile with all your open tabs, history, and logins!"
                 )
 
         if active_resume_path:
@@ -476,6 +476,7 @@ def main() -> None:
                             on_action=action_callback,
                             user_data_dir=chosen_user_data_dir,
                             cdp_url=chosen_cdp_url,
+                            profile_directory=profile_name_input.strip() or "jobagent",
                         )
 
                         outcome = applicant.apply(job_id=job.id, dry_run=dry_run, wait_for_human=wait_for_human)
@@ -523,6 +524,7 @@ def main() -> None:
                                     wait_for_human=True,
                                     on_log=st.toast,
                                     user_data_dir="data/chrome_profile",
+                                    profile_directory="jobagent",
                                 )
                                 app_res = app.apply(job_id=j.id, dry_run=False, wait_for_human=True)
                                 st.info(f"Result: {app_res.status.upper()} - {app_res.detail}")

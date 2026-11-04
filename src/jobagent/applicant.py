@@ -47,6 +47,7 @@ class Applicant:
         on_action: Optional[Callable[[str, str, str], None]] = None,
         user_data_dir: Optional[Path | str] = None,
         cdp_url: Optional[str] = None,
+        profile_directory: Optional[str] = "jobagent",
     ):
         self._storage = storage
         self._resolver = resolver
@@ -62,6 +63,7 @@ class Applicant:
         self._on_action = on_action or (lambda act, tgt, ext: None)
         self._user_data_dir = str(user_data_dir) if user_data_dir else None
         self._cdp_url = str(cdp_url) if cdp_url else None
+        self._profile_directory = profile_directory
 
     def _log(self, message: str) -> None:
         self._on_log(message)
@@ -425,6 +427,12 @@ class Applicant:
                         raise
 
             if not is_cdp:
+                extra_args = []
+                if not self._headless:
+                    extra_args.append("--start-maximized")
+                if self._profile_directory:
+                    extra_args.append(f"--profile-directory={self._profile_directory}")
+
                 if self._user_data_dir:
                     profile_path = Path(self._user_data_dir).resolve()
                     profile_path.mkdir(parents=True, exist_ok=True)
@@ -433,15 +441,15 @@ class Applicant:
                         "channel": "chrome",
                         "headless": self._headless,
                     }
-                    if not self._headless:
-                        launch_kwargs["args"] = ["--start-maximized"]
-                    self._log(f"Opening Chrome with persistent user profile: {profile_path.name}...")
+                    if extra_args:
+                        launch_kwargs["args"] = extra_args
+                    self._log(f"Opening Chrome with persistent user profile '{self._profile_directory or 'Default'}' (storage: {profile_path.name})...")
                     context = p.chromium.launch_persistent_context(**launch_kwargs)
                     page = context.pages[0] if context.pages else context.new_page()
                 else:
                     launch_kwargs = {"channel": "chrome", "headless": self._headless}
-                    if not self._headless:
-                        launch_kwargs["args"] = ["--start-maximized"]
+                    if extra_args:
+                        launch_kwargs["args"] = extra_args
                     browser = p.chromium.launch(**launch_kwargs)
                     context = browser.new_context(viewport={"width": 1280, "height": 800} if self._headless else None)
                     page = context.new_page()

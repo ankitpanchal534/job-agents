@@ -233,3 +233,35 @@ def test_applicant_cdp_fallback_to_persistent(mock_server, tmp_path):
     assert outcome.status == "ready_to_submit"
     assert any("failed to connect to chrome" in l.lower() for l in logs)
     assert any("falling back to persistent chrome profile" in l.lower() for l in logs)
+
+
+def test_applicant_with_named_profile_directory(mock_server, tmp_path):
+    db_file = tmp_path / "test_jobs.db"
+    storage = Storage(str(db_file))
+    job = storage.add_job(mock_server)
+
+    profile_dir = tmp_path / "profile"
+    resumes_dir = profile_dir / "resumes"
+    resumes_dir.mkdir(parents=True)
+    fake_resume = resumes_dir / "resume.pdf"
+    fake_resume.write_text("dummy resume content")
+
+    user_profile = tmp_path / "chrome_user_data_named"
+    user_profile.mkdir(parents=True)
+
+    logs = []
+    applicant = Applicant(
+        storage=storage,
+        resolver=FakeResolver(),
+        headless=True,
+        profile_dir=profile_dir,
+        user_data_dir=user_profile,
+        profile_directory="jobagent",
+        on_log=lambda m: logs.append(m),
+    )
+
+    outcome = applicant.apply(job_id=job.id, dry_run=True)
+    assert outcome.status == "ready_to_submit"
+    assert any("jobagent" in l for l in logs)
+    subdirs = [p.name for p in user_profile.iterdir() if p.is_dir()]
+    assert "jobagent" in subdirs

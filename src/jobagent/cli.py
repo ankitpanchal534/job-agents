@@ -330,25 +330,32 @@ def _chrome(args) -> int:
     system = platform.system()
     port = args.port or 9222
     user_data_dir = args.user_data_dir
+    profile_dir = getattr(args, "profile_directory", "jobagent")
 
     cmd = []
     if system == "Darwin":
         cmd = ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", f"--remote-debugging-port={port}"]
         if user_data_dir:
             cmd.append(f"--user-data-dir={user_data_dir}")
+        if profile_dir:
+            cmd.append(f"--profile-directory={profile_dir}")
     elif system == "Windows":
         cmd = ["chrome.exe", f"--remote-debugging-port={port}"]
         if user_data_dir:
             cmd.append(f"--user-data-dir={user_data_dir}")
+        if profile_dir:
+            cmd.append(f"--profile-directory={profile_dir}")
     else:
         cmd = ["google-chrome", f"--remote-debugging-port={port}"]
         if user_data_dir:
             cmd.append(f"--user-data-dir={user_data_dir}")
+        if profile_dir:
+            cmd.append(f"--profile-directory={profile_dir}")
 
-    print(f"Launching Google Chrome with remote debugging on port {port}...")
+    print(f"Launching Google Chrome with profile '{profile_dir}' and remote debugging on port {port}...")
     try:
         subprocess.Popen(cmd)
-        print(f"✓ Google Chrome launched on port {port}.")
+        print(f"✓ Google Chrome launched on port {port} (profile: {profile_dir}).")
         print("Note: To connect to your personal profile, quit Chrome completely (Cmd+Q) before running this command.")
         return 0
     except Exception as e:
@@ -392,6 +399,7 @@ def _apply(args, llm, env: Mapping[str, str], channels) -> int:
         wait_for_human=not args.no_wait,
         user_data_dir=user_data_dir,
         cdp_url=args.cdp_url,
+        profile_directory=args.profile_directory,
     )
 
     outcome = applicant.apply(job_id=job_id, dry_run=args.dry_run, wait_for_human=not args.no_wait)
@@ -473,6 +481,7 @@ def main(
 
     chrome_cmd = commands.add_parser("chrome", help="launch Google Chrome with remote debugging enabled")
     chrome_cmd.add_argument("--port", type=int, default=9222, help="debugging port (default: 9222)")
+    chrome_cmd.add_argument("--profile-directory", default="jobagent", help="Chrome profile directory or name (default: jobagent)")
     chrome_cmd.add_argument("--user-data-dir", default=None, help="custom user data directory")
 
     apply_cmd = commands.add_parser("apply", help="open job URL in Chrome and fill application form")
@@ -481,6 +490,7 @@ def main(
     apply_cmd.add_argument("--headless", action="store_true", default=False, help="run browser in headless mode")
     apply_cmd.add_argument("--no-wait", action="store_true", default=False, help="do not keep browser open waiting for human resolution on blocks")
     apply_cmd.add_argument("--resume", type=Path, default=None, help="path to resume PDF file to attach")
+    apply_cmd.add_argument("--profile-directory", default="jobagent", help="Chrome profile directory or name (default: jobagent)")
     apply_cmd.add_argument("--chrome-profile", default="data/chrome_profile", help="path to persistent Chrome profile")
     apply_cmd.add_argument("--ephemeral", action="store_true", default=False, help="use temporary incognito browser without saving profile")
     apply_cmd.add_argument("--cdp-url", default=None, help="connect to existing Chrome via CDP (e.g. http://localhost:9222)")

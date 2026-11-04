@@ -492,9 +492,10 @@ def test_chrome_command_launches(monkeypatch, capsys):
     from unittest.mock import MagicMock
     mock_popen = MagicMock()
     monkeypatch.setattr("subprocess.Popen", mock_popen)
-    code = main(["chrome", "--port", "9222"])
+    code = main(["chrome", "--port", "9222", "--profile-directory", "jobagent"])
     assert code == 0
-    assert "Google Chrome launched on port 9222" in capsys.readouterr().out
+    assert "Google Chrome launched on port 9222 (profile: jobagent)" in capsys.readouterr().out
     mock_popen.assert_called_once()
     args_called = mock_popen.call_args[0][0]
     assert any("--remote-debugging-port=9222" in a for a in args_called)
+    assert any("--profile-directory=jobagent" in a for a in args_called)

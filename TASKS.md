@@ -21,6 +21,14 @@ The foundation plan (P0 to P5) is built. The detailed, ordered list is in `HANDO
 
 ## Where I stopped
 
+Named "jobagent" Chrome Profile Integration:
+- `src/jobagent/applicant.py`: added `profile_directory="jobagent"` parameter to `Applicant` and injected `--profile-directory=jobagent` into Chrome launch args, ensuring Chrome creates and attaches directly to the dedicated "jobagent" profile.
+- `src/jobagent/cli.py`: updated `_chrome` and `_apply` commands to support `--profile-directory` (defaulting to `"jobagent"`).
+- `src/jobagent/dashboard.py`: updated Tab 1 and Tab 2 to use the `"jobagent"` profile name and pass it to `Applicant`.
+- `tests/test_applicant.py`: added `test_applicant_with_named_profile_directory`.
+- `tests/test_cli.py`: verified `jobagent chrome --profile-directory jobagent`.
+- All 265 tests passing (`uv run pytest`) and `check-config` clean.
+
 Chrome Persistent User Profile & CDP Live Browser Connection:
 - `src/jobagent/applicant.py`:
   - Added support for persistent user profiles via `launch_persistent_context(user_data_dir=...)` with real Google Chrome (`channel="chrome"`).
