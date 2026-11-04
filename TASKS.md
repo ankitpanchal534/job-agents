@@ -21,6 +21,11 @@ The foundation plan (P0 to P5) is built. The detailed, ordered list is in `HANDO
 
 ## Where I stopped
 
+Dashboard Multi-Agent Status Cards Keyword Argument Fix & UI Test Coverage:
+- `src/jobagent/dashboard.py`: Fixed `render_card_matcher` signature and implementation to accept `details: str = ""` and `**kwargs`. Added `**kwargs` and case-insensitive status handling across all 4 agent render functions (`render_card_extractor`, `render_card_matcher`, `render_card_resolver`, `render_card_applicant`), preventing unexpected keyword argument exceptions.
+- `tests/test_dashboard.py`: Added tests `test_dashboard_agent_button_execution` and `test_dashboard_agent_button_waiting_and_answered_callbacks` verifying that clicking the agent start button with callbacks, scoring, waiting, and answering states updates status cards without exceptions.
+- All 261 tests passing (`uv run pytest`) and `check-config` clean.
+
 Live In-Page Human Watching & Automatic Answer Learning completed:
 - `src/jobagent/form_inspector.py`: updated `normalize_field_prompt` to strip Unicode heavy asterisks (`✱`, `★`, `•`), newlines, colons, and trailing whitespace so Lever/Greenhouse labels like `Current Compensation (Yearly)\n✱` clean cleanly.
 - `src/jobagent/profile.py`: added `save_learned_answer(answers_file, question, answer, tags)` which safely appends learned FAQ entries to `profile/answers.yaml` and verifies Pydantic strict model validation.

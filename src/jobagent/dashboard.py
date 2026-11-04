@@ -175,14 +175,20 @@ def main() -> None:
         card_res = m_c3.empty()
         card_app = m_c4.empty()
 
-        def render_card_extractor(status: str, title: str = "", company: str = "", details: str = ""):
+        def render_card_extractor(
+            status: str,
+            title: str = "",
+            company: str = "",
+            details: str = "",
+            **kwargs,
+        ):
             status_colors = {
-                "Idle": "#94a3b8",
-                "Extracting...": "#f59e0b",
-                "Completed": "#10b981",
-                "Failed": "#ef4444",
+                "idle": "#94a3b8",
+                "extracting...": "#f59e0b",
+                "completed": "#10b981",
+                "failed": "#ef4444",
             }
-            color = status_colors.get(status, "#38bdf8")
+            color = status_colors.get(status.lower(), "#38bdf8")
             badge_bg = f"{color}22"
             card_ext.markdown(
                 f"""<div style="border: 1px solid {color}; border-radius: 8px; padding: 12px; min-height: 160px; background-color: rgba(255,255,255,0.02);">
@@ -202,20 +208,26 @@ def main() -> None:
             score: Optional[float] = None,
             decision: str = "",
             reason: str = "",
+            details: str = "",
             matched: list[str] = [],
             missing: list[str] = [],
+            **kwargs,
         ):
             status_colors = {
-                "Idle": "#94a3b8",
-                "Scoring...": "#f59e0b",
+                "idle": "#94a3b8",
+                "scoring...": "#f59e0b",
                 "apply": "#10b981",
                 "watch_later": "#f59e0b",
                 "reject": "#ef4444",
+                "rejected": "#ef4444",
+                "completed": "#10b981",
+                "failed": "#ef4444",
             }
             color = status_colors.get(decision.lower(), status_colors.get(status.lower(), "#10b981"))
             badge_bg = f"{color}22"
             score_disp = f"<b style='font-size: 16px; color: {color};'>{int(score)}%</b>" if score is not None else "<span style='color: #94a3b8;'>—</span>"
             decision_label = decision.upper() if decision else status
+            effective_reason = reason or details
 
             matched_pills = "".join(f"<span style='background: #10b98122; color: #10b981; border: 1px solid #10b98144; padding: 1px 5px; border-radius: 4px; font-size: 10px; margin-right: 3px;'>✓ {s}</span>" for s in (matched or [])[:3])
             missing_pills = "".join(f"<span style='background: #ef444422; color: #ef4444; border: 1px solid #ef444444; padding: 1px 5px; border-radius: 4px; font-size: 10px; margin-right: 3px;'>✗ {s}</span>" for s in (missing or [])[:2])
@@ -230,26 +242,36 @@ def main() -> None:
                         <span>Match Score:</span> {score_disp}
                     </div>
                     <div style="margin-bottom: 6px; line-height: 1.6;">{matched_pills} {missing_pills}</div>
-                    <div style="font-size: 11px; color: #94a3b8; line-height: 1.3;">{reason[:80] + ('...' if len(reason) > 80 else '') if reason else 'Awaiting extraction...'}</div>
+                    <div style="font-size: 11px; color: #94a3b8; line-height: 1.3;">{effective_reason[:80] + ('...' if len(effective_reason) > 80 else '') if effective_reason else 'Awaiting extraction...'}</div>
                 </div>""",
                 unsafe_allow_html=True,
             )
 
-        def render_card_resolver(status: str, question: str = "", answer: str = "", source: str = ""):
+        def render_card_resolver(
+            status: str,
+            question: str = "",
+            answer: str = "",
+            source: str = "",
+            details: str = "",
+            **kwargs,
+        ):
             status_colors = {
-                "Idle": "#94a3b8",
-                "Resolving...": "#f59e0b",
-                "Resolved": "#10b981",
+                "idle": "#94a3b8",
+                "resolving...": "#f59e0b",
+                "resolved": "#10b981",
                 "curated": "#10b981",
                 "generated": "#3b82f6",
                 "needs_input": "#ef4444",
-                "Answered": "#10b981",
-                "Needs Input": "#ef4444",
-                "Waiting on User": "#ef4444",
+                "needs input": "#ef4444",
+                "answered": "#10b981",
+                "waiting on user": "#ef4444",
+                "waiting for human": "#ef4444",
+                "human in chrome": "#10b981",
             }
-            color = status_colors.get(source, status_colors.get(status, "#f59e0b"))
+            color = status_colors.get(source.lower(), status_colors.get(status.lower(), "#f59e0b"))
             badge_bg = f"{color}22"
-            q_disp = question[:45] + ("..." if len(question) > 45 else "") if question else "Awaiting form questions..."
+            effective_q = question or details
+            q_disp = effective_q[:45] + ("..." if len(effective_q) > 45 else "") if effective_q else "Awaiting form questions..."
             a_disp = answer[:35] + ("..." if len(answer) > 35 else "") if answer else "—"
 
             card_res.markdown(
@@ -266,25 +288,36 @@ def main() -> None:
                 unsafe_allow_html=True,
             )
 
-        def render_card_applicant(status: str, action: str = "", target: str = "", hands_state: str = "Virtual Hands Ready"):
+        def render_card_applicant(
+            status: str,
+            action: str = "",
+            target: str = "",
+            hands_state: str = "Virtual Hands Ready",
+            details: str = "",
+            **kwargs,
+        ):
             status_colors = {
-                "Idle": "#94a3b8",
-                "Navigating": "#3b82f6",
-                "Typing": "#a855f7",
-                "Clicking": "#8b5cf6",
-                "Attaching": "#3b82f6",
-                "Selecting": "#8b5cf6",
-                "Checking": "#8b5cf6",
-                "Verified": "#10b981",
-                "Waiting for Human": "#ef4444",
-                "Answered": "#10b981",
-                "Completed": "#10b981",
-                "Failed": "#ef4444",
+                "idle": "#94a3b8",
+                "navigating": "#3b82f6",
+                "typing": "#a855f7",
+                "clicking": "#8b5cf6",
+                "attaching": "#3b82f6",
+                "selecting": "#8b5cf6",
+                "checking": "#8b5cf6",
+                "submitting": "#3b82f6",
+                "verified": "#10b981",
+                "waiting for human": "#ef4444",
+                "answered": "#10b981",
+                "completed": "#10b981",
+                "applied": "#10b981",
+                "blocked": "#ef4444",
+                "failed": "#ef4444",
                 "running": "#8b5cf6",
             }
-            color = status_colors.get(status, "#8b5cf6")
+            color = status_colors.get(status.lower(), "#8b5cf6")
             badge_bg = f"{color}22"
-            act_disp = action[:45] + ("..." if len(action) > 45 else "") if action else "Virtual hands standby."
+            effective_action = action or details
+            act_disp = effective_action[:45] + ("..." if len(effective_action) > 45 else "") if effective_action else "Virtual hands standby."
             tgt_disp = target[:35] + ("..." if len(target) > 35 else "") if target else "—"
 
             card_app.markdown(
