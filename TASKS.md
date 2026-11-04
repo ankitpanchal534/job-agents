@@ -21,8 +21,8 @@ The foundation plan (P0 to P5) is built. The detailed, ordered list is in `HANDO
 
 ## Where I stopped
 
-Task 3 completed: Live block waiting in open browser session, journey step audit tracking across applicant/matcher, virtual hands integration, and `--no-wait` CLI flag in `src/jobagent/applicant.py`, `matcher.py`, and `cli.py`. All 256 tests passing.
-Next: Task 4 (Multi-Agent Real-Time UI cards & Expandable Journey Timeline in `src/jobagent/dashboard.py`).
+Task 4 completed: Multi-Agent Real-Time UI cards & Expandable Application Journey Timeline in `src/jobagent/dashboard.py`. All 257 tests passing.
+Next: Task 5 (End-to-End Verification & Documentation).
 
 ## Notes for whoever continues
 
