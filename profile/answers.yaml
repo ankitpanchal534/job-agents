@@ -305,3 +305,36 @@ faq:
   - question: "Location (City)"
     answer: "Gurgaon"
     tags: [learned, location]
+  - question: "What is your current annual compensation in INR?"
+    answer: "15"
+    tags: [learned, compensation]
+  - question: "What are your salary expectations? (ONLY NUMBERS)"
+    answer: "2500000"
+    tags: [learned, compensation]
+  - question: "Choose your currency"
+    answer: "INR"
+    tags: [learned]
+  - question: "Choose your salary period"
+    answer: "Month"
+    tags: [learned, compensation]
+  - question: "Gross or net?"
+    answer: "gross"
+    tags: [learned]
+  - question: "Did a Consultant from our Group recommended you to apply? Please name him or her so we know whom to reward :)"
+    answer: "NO"
+    tags: [learned]
+  - question: "How did you learn about this role?"
+    answer: "LinkedIn"
+    tags: [learned]
+  - question: "Have you previously been employed by Coupa?"
+    answer: "No"
+    tags: [learned]
+  - question: "What are your salary expectations (in local currency)?"
+    answer: "2500000"
+    tags: [learned, compensation]
+  - question: "If your role requires it, would you be prepared to work in the office?"
+    answer: "Yes"
+    tags: [learned]
+  - question: "Do you have any relatives, household members, or anyone with whom you have a close personal relationship currently employed at Coupa Software?"
+    answer: "No"
+    tags: [learned]
