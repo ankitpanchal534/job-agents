@@ -4,7 +4,7 @@
 # Visa, salary, notice period, relocation, background checks and demographic questions are never
 # drafted: they are answered only from here and preferences.yaml, otherwise the agent asks you.
 
-# faq: []
+# faq:
 #  - question: "Why do you want to work here?"
 #    answer: ""
 #    tags: [motivation]
@@ -287,3 +287,18 @@ faq:
   - question: "Total Years of experience"
     answer: "4"
     tags: [experience]
+  - question: "Current company"
+    answer: "Deloitte"
+    tags: [learned]
+  - question: "LinkedIn URL"
+    answer: "http://linkedin.com/in/ankit-panchal534"
+    tags: [learned]
+  - question: "GitHub URL"
+    answer: "http://github.com/ankitpanchal534"
+    tags: [learned]
+  - question: "Current Compensation (Yearly)"
+    answer: "150000"
+    tags: [learned, compensation]
+  - question: "Expected Compensation (Yearly)"
+    answer: "2500000"
+    tags: [learned, compensation]
