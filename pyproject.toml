@@ -12,6 +12,7 @@ dependencies = ["pydantic>=2.5", "pyyaml>=6"]
 [project.optional-dependencies]
 dev = ["pytest>=8"]
 ui = ["streamlit>=1.40"]
+applicant = ["playwright>=1.40"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

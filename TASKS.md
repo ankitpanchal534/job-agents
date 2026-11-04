@@ -21,8 +21,25 @@ The foundation plan (P0 to P5) is built. The detailed, ordered list is in `HANDO
 
 ## Where I stopped
 
-Task 4 completed: Multi-Agent Real-Time UI cards & Expandable Application Journey Timeline in `src/jobagent/dashboard.py`. All 257 tests passing.
-Next: Task 5 (End-to-End Verification & Documentation).
+Application Journey Audit, Virtual Hands ("Agent Hands"), Live Block Waiting, and Real-Time Multi-Agent UI completed:
+1. Complete Journey Audit Storage (`src/jobagent/storage.py`):
+   - Added `journey_steps` table with schema `(id, job_id, step, agent, status, summary, details, created_at)` and index `idx_journey_job`.
+   - Added `JourneyStep` dataclass, `_journey_step` parser, `add_journey_step()`, `list_journey_steps()`, and `is_block_resolved()` methods.
+2. Virtual Mouse & Keyboard Engine ("Agent Hands") (`src/jobagent/browser_hands.py`):
+   - `inject_cursor`: Injects custom neon cursor (`#jobagent-cursor`) with SVG arrow and dynamic action badge into active Playwright pages.
+   - Smooth curved movement: Computes quadratic Bézier trajectories with human-like perpendicular deviation and moves Playwright mouse coordinates with visual updates.
+   - Realistic typing: Injects human micro-delays (25-55ms with word-boundary hesitations) and visual click ripples.
+3. Live Block Waiting & Human Resolution (`src/jobagent/applicant.py`):
+   - Added `wait_for_human: bool = True` (configurable via toggle or `--no-wait` flag).
+   - In-place polling loop: When blocked (CAPTCHA, missing input, unsupported portal), keeps Chrome window open and continuously polls `storage.is_block_resolved` or live CAPTCHA clearance.
+   - When resolved in browser or dashboard, resumes immediately within the exact same browser window.
+   - Records full chronological journey steps across Extractor, Matcher, Resolver, and Applicant.
+4. Multi-Agent Real-Time UI & Journey Timeline (`src/jobagent/dashboard.py`):
+   - Real-time status cards for Extractor Agent, Matcher Agent, Resolver Agent, and Browser Applicant.
+   - "Keep Chrome open on block" toggle switch in Tab 1.
+   - Expandable "Complete Application Journey" audit timeline under every tracked application in Tab 2 with status pills and JSON detail view.
+   - Quick resume action in Tab 3 that unblocks waiting live browser sessions.
+5. All 257 tests passing (`uv run pytest` in 29.34s) and `check-config` verified clean.
 
 ## Notes for whoever continues
 

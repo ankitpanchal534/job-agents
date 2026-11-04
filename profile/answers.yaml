@@ -237,3 +237,53 @@ faq:
   - question: "Do you have experience with accessibility standards such as WCAG?"
     answer: "Yes"
     tags: [accessibility]
+
+  # Common application form questions
+  - question: "Please select the option that best describes your gender:"
+    answer: "Male"
+    tags: [demographic]
+
+  - question: "Gender"
+    answer: "Male"
+    tags: [demographic]
+
+  - question: "Are you based out of Bangalore ?"
+    answer: "No"
+    tags: [location]
+
+  - question: "Are you willing to relocate to Bangalore?"
+    answer: "Yes"
+    tags: [location, relocation]
+
+  - question: "Current location"
+    answer: "Gurgaon"
+    tags: [location]
+
+  - question: "Total Years of experience"
+    answer: "4"
+    tags: [experience]
+
+  # Common application form questions
+  - question: "Please select the option that best describes your gender:"
+    answer: "Male"
+    tags: [demographic]
+
+  - question: "Gender"
+    answer: "Male"
+    tags: [demographic]
+
+  - question: "Are you based out of Bangalore ?"
+    answer: "No"
+    tags: [location]
+
+  - question: "Are you willing to relocate to Bangalore?"
+    answer: "Yes"
+    tags: [location, relocation]
+
+  - question: "Current location"
+    answer: "Gurgaon"
+    tags: [location]
+
+  - question: "Total Years of experience"
+    answer: "4"
+    tags: [experience]
